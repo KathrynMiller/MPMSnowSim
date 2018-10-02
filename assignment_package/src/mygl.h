@@ -8,11 +8,14 @@
 #include <scene/sphere.h>
 #include "camera.h"
 #include "particles.h"
+#include "simulation.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
 #include <QObject>
 #include <QFileDialog>
+#include <QTimer>
+
 
 class MyGL
     : public GLWidget277
@@ -28,8 +31,14 @@ private:
     GLuint vao; // A handle for our vertex array object. This will store the VBOs created in our geometry classes.
                 // Don't worry too much about this. Just know it is necessary in order to render geometry.
 
+    /// Timer linked to timerUpdate(). Fires approx. 60 times per second
+    QTimer timer;
+    // stores time in milliseconds
+    int time;
+
     Camera m_glCamera;
-    Particles* particles;
+
+    Simulation* simulation;
 
 public:
     explicit MyGL(QWidget *parent = 0);
@@ -42,6 +51,10 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent *e);
+
+private slots:
+    /// Slot that gets called ~60 times per second
+    void timerUpdate();
 };
 
 

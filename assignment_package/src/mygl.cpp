@@ -12,14 +12,21 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonValue>
+#include <QDateTime>
 
 
 MyGL::MyGL(QWidget *parent)
     : GLWidget277(parent),
       m_geomCylinder(this), m_geomSphere(this),
       m_progLambert(this), m_progFlat(this),
-      m_glCamera(), particles(new Particles(this, 1000))
+      m_glCamera(), simulation(new Simulation(new Particles(this, 1000))),
+      time(QDateTime::currentMSecsSinceEpoch())
 {
+    // Connect the timer to a function so that when the timer ticks the function is executed
+    connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
+    // Tell the timer to redraw 60 times per second
+    timer.start(16);
+
     setFocusPolicy(Qt::StrongFocus);
 }
 
@@ -29,7 +36,8 @@ MyGL::~MyGL()
     glDeleteVertexArrays(1, &vao);
     m_geomCylinder.destroy();
     m_geomSphere.destroy();
-    particles->destroy();
+    simulation->getParticles()->destroy();
+    simulation->~Simulation();
 }
 
 void MyGL::initializeGL()
@@ -62,7 +70,7 @@ void MyGL::initializeGL()
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
 
     // TODO: fill particle into a mesh
-    particles->create();
+    simulation->getParticles()->create();
 
     // Set a color with which to draw geometry since you won't have one
     // defined until you implement the Node classes.
@@ -108,7 +116,7 @@ void MyGL::paintGL()
     //Send the geometry's transformation matrix to the shader
     // check if mesh is bound and draw with appropriate shader
         m_progLambert.setModelMatrix(model);
-        m_progLambert.draw(*particles);
+        m_progLambert.draw(*(simulation->getParticles()));
 
 
     this->glDisable(GL_DEPTH_TEST);
@@ -220,4 +228,18 @@ void MyGL::parseOBJ(const QString &fileName) {
     }
 }
 
+// MyGL's constructor links timerUpdate() to a timer that fires 60 times per second.
+// We're treating MyGL as our game engine class, so we're going to use timerUpdate
+void MyGL::timerUpdate()
+{
+    int64_t t = QDateTime::currentMSecsSinceEpoch();
+    int64_t dt = t - time;
+    //reset time
+    time = t;
 
+    simulation->getParticles()->destroy();
+    simulation->RunSimulation();
+    simulation->getParticles()->create();
+
+    //update();
+}

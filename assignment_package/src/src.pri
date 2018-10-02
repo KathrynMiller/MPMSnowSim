@@ -14,7 +14,8 @@ SOURCES += \
     $$PWD/drawable.cpp \
     $$PWD/camera.cpp \
     $$PWD/cameracontrolshelp.cpp \
-    $$PWD/particles.cpp
+    $$PWD/particles.cpp \
+    $$PWD/simulation.cpp
 
 HEADERS += \
     $$PWD/la.h \
@@ -29,6 +30,7 @@ HEADERS += \
     $$PWD/camera.h \
     $$PWD/cameracontrolshelp.h \
     $$PWD/../particles.h \
-    $$PWD/particles.h
+    $$PWD/particles.h \
+    $$PWD/simulation.h
 
 DISTFILES +=
