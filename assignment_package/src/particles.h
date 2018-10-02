@@ -10,14 +10,18 @@
 //template <unsigned int numParticles>
 class Particles: public Drawable
 {
-private:
+public:
+    // number of particles in the simulation
     int numParticles;
+
+    // numParticles x 3 matrix holding position data
     Eigen::MatrixXd positions;
     Eigen::MatrixXd masses;
     Eigen::MatrixXd volumes;
     Eigen::MatrixXd velocities;
-public:
+
     Particles(GLWidget277 *context, int numParticles);
     void create() override;
     GLenum drawMode() override;
+
 };

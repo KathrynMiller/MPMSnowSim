@@ -241,5 +241,5 @@ void MyGL::timerUpdate()
     simulation->RunSimulation();
     simulation->getParticles()->create();
 
-    //update();
+    update();
 }
