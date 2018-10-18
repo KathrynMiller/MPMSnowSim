@@ -20,7 +20,7 @@ MyGL::MyGL(QWidget *parent)
       m_geomCylinder(this), m_geomSphere(this),
       m_progLambert(this), m_progFlat(this),
       m_glCamera(), simulation(new Simulation(new Particles(this, 1000))),
-      time(QDateTime::currentMSecsSinceEpoch())
+      time(QDateTime::currentMSecsSinceEpoch()), poissonSampler(new PoissonSampler())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -36,7 +36,7 @@ MyGL::~MyGL()
     glDeleteVertexArrays(1, &vao);
     m_geomCylinder.destroy();
     m_geomSphere.destroy();
-    simulation->getParticles()->destroy();
+    simulation->particles->destroy();
     simulation->~Simulation();
 }
 
@@ -68,9 +68,6 @@ void MyGL::initializeGL()
     m_progLambert.create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
     // Create and set up the flat lighting shader
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
-
-    // TODO: fill particle into a mesh
-    simulation->getParticles()->create();
 
     // Set a color with which to draw geometry since you won't have one
     // defined until you implement the Node classes.
@@ -116,7 +113,7 @@ void MyGL::paintGL()
     //Send the geometry's transformation matrix to the shader
     // check if mesh is bound and draw with appropriate shader
         m_progLambert.setModelMatrix(model);
-        m_progLambert.draw(*(simulation->getParticles()));
+        m_progLambert.draw(*(simulation->particles));
 
 
     this->glDisable(GL_DEPTH_TEST);
@@ -184,47 +181,14 @@ void MyGL::keyPressEvent(QKeyEvent *e)
 }
 
 
-void MyGL::parseOBJ(const QString &fileName) {
+void MyGL::generateNewParticleSet() {
+    QString filename = QFileDialog::getOpenFileName(0, QString("Load Scene File"), QDir::currentPath().append(QString("../../")), QString("*.obj"));
+    poissonSampler->SampleMesh(filename);
 
-    qsrand(124324);
-    QFile file(fileName);
-    if(file.exists())
-    {
-        if(file.open(QFile::ReadOnly | QFile::Text))
-        {
-            std::vector<glm::vec3> v;
-            while(!file.atEnd())
-            {
-                QString line = file.readLine().trimmed();
-                QStringList lineParts = line.split(("\\s+"));
-                if(lineParts.count() > 0)
-                {
-
-                    // if it’s a vertex position (v)
-                    if(lineParts.at(0).compare("v", Qt::CaseInsensitive) == 0)
-                    {
-                        v.push_back(glm::vec3(lineParts.at(1).toFloat(),
-                                              lineParts.at(2).toFloat(),
-                                              lineParts.at(3).toFloat()));
-                    }
-
-                    // if it’s face data (f)
-                    else if(lineParts.at(0).compare("f", Qt::CaseInsensitive) == 0)
-                    {
-                        // make random variations of pink
-                        float r = (float) qrand() / (RAND_MAX);
-
-                        for (int i = 1; i < lineParts.size(); i ++) {
-                            // get points from v array
-                            glm::vec3 pos = v[(lineParts.at(i).split("/").at(0).toInt() - 1)];
-                        }
-                    }
-
-                }
-            }
-
-            file.close();
-        }
+    for(int i = 0; i < poissonSampler->validSamples.size(); i++) {
+        simulation->particles->positions(i, 0) = poissonSampler->validSamples[i]->pos[0];
+        simulation->particles->positions(i, 1) = poissonSampler->validSamples[i]->pos[1];
+        simulation->particles->positions(i, 2) = poissonSampler->validSamples[i]->pos[2];
     }
 }
 
@@ -237,9 +201,9 @@ void MyGL::timerUpdate()
     //reset time
     time = t;
 
-    simulation->getParticles()->destroy();
+    simulation->particles->destroy();
     simulation->RunSimulation();
-    simulation->getParticles()->create();
+    simulation->particles->create();
 
     update();
 }

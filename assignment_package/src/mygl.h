@@ -9,6 +9,7 @@
 #include "camera.h"
 #include "particles.h"
 #include "simulation.h"
+#include "poissonsampler.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -39,6 +40,7 @@ private:
     Camera m_glCamera;
 
     Simulation* simulation;
+    PoissonSampler* poissonSampler;
 
 public:
     explicit MyGL(QWidget *parent = 0);
@@ -47,7 +49,6 @@ public:
     void initializeGL();
     void resizeGL(int w, int h);
     void paintGL();
-    void parseOBJ(const QString &fileName);
 
 protected:
     void keyPressEvent(QKeyEvent *e);
@@ -55,6 +56,7 @@ protected:
 private slots:
     /// Slot that gets called ~60 times per second
     void timerUpdate();
+    void generateNewParticleSet();
 };
 
 

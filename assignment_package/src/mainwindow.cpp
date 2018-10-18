@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->mygl->setFocus();
+    connect(ui->NewParticleSet, SIGNAL(clicked(bool)), ui->mygl, SLOT(generateNewParticleSet()));
 }
 
 MainWindow::~MainWindow()

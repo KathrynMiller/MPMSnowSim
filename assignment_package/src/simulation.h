@@ -4,19 +4,17 @@
 
 class Simulation
 {
-private:
-    // the set of particles over which to run the sim
-    Particles* particles;
-    int numParticles;
 
 public:
     Simulation(Particles *p);
     ~Simulation();
 
+    // the set of particles over which to run the sim
+    Particles* particles;
+    int numParticles;
+
+
     // updates the particles positions in accordance with the MPM paper
     void RunSimulation();
-
-    // getter functions
-    Particles* getParticles() const;
 
 };

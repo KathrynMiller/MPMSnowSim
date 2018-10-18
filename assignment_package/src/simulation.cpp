@@ -8,11 +8,7 @@ Simulation::~Simulation() {
 }
 
 void Simulation::RunSimulation() {
-    for(int i = 0; i < particles->numParticles; i++) {
-        particles->positions(i, 1) -= .1;
-    }
-}
-
-Particles* Simulation::getParticles() const {
-    return particles;
+//    for(int i = 0; i < particles->numParticles; i++) {
+//        particles->positions(i, 1) -= .1;
+//    }
 }

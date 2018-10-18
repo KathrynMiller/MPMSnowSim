@@ -5,19 +5,19 @@
 Particles::Particles(GLWidget277 *context, int numParticles): Drawable(context), numParticles(numParticles),
 positions(Eigen::MatrixXd(numParticles, 3)){
 
-    int range = cbrt(numParticles);
-    // build a cube from 1000 particles
-    int index = 0;
-    for(int i = -range/2; i < range/2; i++) {
-        for(int j = -range/2; j < range/2; j++) {
-            for(int k = -range/2; k < range/2; k++) {
-                 positions(index, 0) = i / 10.0;
-                 positions(index, 1) = j / 10.0;
-                 positions(index, 2) = k / 10.0;
-                 index++;
-            }
-        }
-    }
+//    int range = cbrt(numParticles);
+//    // build a cube from 1000 particles
+//    int index = 0;
+//    for(int i = -range/2; i < range/2; i++) {
+//        for(int j = -range/2; j < range/2; j++) {
+//            for(int k = -range/2; k < range/2; k++) {
+//                 positions(index, 0) = i / 10.0;
+//                 positions(index, 1) = j / 10.0;
+//                 positions(index, 2) = k / 10.0;
+//                 index++;
+//            }
+//        }
+//    }
 }
 
 

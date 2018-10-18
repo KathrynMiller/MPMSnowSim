@@ -44,8 +44,10 @@ address_sanitizer {
     QMAKE_LFLAGS += -fsanitize=address
 }
 
-HEADERS +=
+HEADERS += \
+    objloader.h
 
-SOURCES +=
+SOURCES += \
+    objloader.cpp
 
 DISTFILES +=
