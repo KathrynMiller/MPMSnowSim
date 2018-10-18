@@ -11,6 +11,7 @@ public:
     PoissonSampler();
 
     void SampleMesh(QString &meshFileName);
+    bool isWithinObj(glm::vec3 point);
 
     float rad = 0.3;
    // QStringRef meshFileName;

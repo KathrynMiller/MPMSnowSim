@@ -253,26 +253,28 @@ bool ObjLoader::intersectsBoundingBox(Node* node, const Ray& r) const{
 }
 
 bool ObjLoader::triangleIntersection(Node* parent, const Ray &r, Intersection *isect, int* numIntersections) const{
-    if(parent->leftChild == nullptr && parent->rightChild == nullptr) { // hit a leaf
-        if(parent->triangles[0]->Intersect(r, isect)) {
-            *numIntersections++;
-            // initialize intersection and return true
-            if(isect->t > 0) {
-                glm::vec3 P = glm::vec3(isect->t * r.direction + r.origin);
-                // make sure this changes correctly
-                *numIntersections++;
-                // do we need to initialize intersection? just need to know if intersects
-                return true;
+    if(intersectsBoundingBox(parent, r)) {
+        if(parent->leftChild == nullptr && parent->rightChild == nullptr) { // hit a leaf
+            if(parent->triangles[0]->Intersect(r, isect)) {
+                // initialize intersection and return true
+                if(isect->t > 0) {
+                    glm::vec3 P = glm::vec3(isect->t * r.direction + r.origin);
+                    // make sure this changes correctly
+                    (*numIntersections)++;
+                    // do we need to initialize intersection? just need to know if intersects
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
+
+        // keep recursing down appropriate sides
+        bool hitLeft = triangleIntersection(parent->leftChild, r, isect, numIntersections);
+        bool hitRight = triangleIntersection(parent->rightChild, r, isect, numIntersections);
+        return hitLeft || hitRight;
     }
 
-    // keep recursing down appropriate sides
-    bool hitLeft = intersectsBoundingBox(parent->leftChild, r);
-    bool hitRight = intersectsBoundingBox(parent->rightChild, r);
-
-
+    /*
     if (hitLeft && !hitRight) {
         return triangleIntersection(parent->leftChild, r, isect, numIntersections);
     } else if (!hitLeft && hitRight) {
@@ -302,6 +304,7 @@ bool ObjLoader::triangleIntersection(Node* parent, const Ray &r, Intersection *i
     // else: both recursive bbox-to-triangle intersections returned true for the test intersections;
     *isect = (testLeft->t > testRight->t) ? *testRight : *testLeft;
     return true;
+    */
 }
 
 bool ObjLoader::Intersect(const Ray &r, int* numIntersections)
