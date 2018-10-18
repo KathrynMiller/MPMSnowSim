@@ -183,6 +183,11 @@ void MyGL::keyPressEvent(QKeyEvent *e)
 
 void MyGL::generateNewParticleSet() {
     QString filename = QFileDialog::getOpenFileName(0, QString("Load Scene File"), QDir::currentPath().append(QString("../../")), QString("*.obj"));
+
+    // clear current particles if any
+    poissonSampler->activeValidSamples.clear();
+    poissonSampler->validSamples.clear();
+
     poissonSampler->SampleMesh(filename);
 
     for(int i = 0; i < poissonSampler->validSamples.size(); i++) {

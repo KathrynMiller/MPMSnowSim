@@ -9,12 +9,15 @@ bool PoissonSampler::isWithinObj(glm::vec3 point) {
     int numIntersections3 = 0;
 
 
-    bool intersects1 = objLoader->Intersect(Ray(point, glm::vec3(1, 0, 0)), &numIntersections1);
-    bool intersects2 = objLoader->Intersect(Ray(point, glm::vec3(0, 1, 0)), &numIntersections2);
-    bool intersects3 = objLoader->Intersect(Ray(point, glm::vec3(0, 0, 1)), &numIntersections3);
+    bool intersects1 = objLoader->Intersect(Ray(point, glm::vec3(1, 1, 0)), &numIntersections1);
+    bool intersects2 = objLoader->Intersect(Ray(point, glm::vec3(0, 1, 1)), &numIntersections2);
+   // bool intersects3 = objLoader->Intersect(Ray(point, glm::vec3(0, 0, 1)), &numIntersections3);
 
-    if(intersects1 || intersects2 || intersects3) {
-        if(numIntersections1 % 2 != 0 || numIntersections2 % 2 != 0  || numIntersections3 % 2 != 0)
+    if(point[0] < -.3 && point[0] > -.4 && point[1] > 0.4) {
+        int k = 0;
+    }
+    if(intersects1 && intersects2) {
+        if(numIntersections1 % 2 != 0 || numIntersections2 % 2 != 0)
         {
             return true;
         }
@@ -38,9 +41,9 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
                 (objLoader->root->maxCorner[2] - objLoader->root->minCorner[2]) -
                 (objLoader->root->maxCorner[2] - objLoader->root->minCorner[2]) / 2.0;
 
-//                x = 0;
-//                y = .1;
-//                z = 0;
+//                        x = -.1;
+//                        y = .8;
+//                        z = 0;
 
         glm::vec3 point = glm::vec3(x, y, z);
 
@@ -49,7 +52,6 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
             validSamples.push_back(new Sample(point, glm::vec3()));
         }
     }
-    int j = 1;
 }
 
 Sample::Sample(glm::vec3 p, glm::vec3 gP) : pos(p), gridPos(gP) {}
