@@ -60,6 +60,6 @@ public:
     bool triangleIntersection(Node* parent, const Ray& r, Intersection* isect, int *numIntersections) const;
     bool Intersect(const Ray& r, int *numIntersections);
 
-private:
     QList<Triangle*> faces;
+
 };

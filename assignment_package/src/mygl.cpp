@@ -13,6 +13,7 @@
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QDateTime>
+#include <QRegularExpression>
 
 
 MyGL::MyGL(QWidget *parent)
@@ -112,8 +113,8 @@ void MyGL::paintGL()
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0,0,0));
     //Send the geometry's transformation matrix to the shader
     // check if mesh is bound and draw with appropriate shader
-        m_progLambert.setModelMatrix(model);
-        m_progLambert.draw(*(simulation->particles));
+    m_progLambert.setModelMatrix(model);
+    m_progLambert.draw(*(simulation->particles));
 
 
     this->glDisable(GL_DEPTH_TEST);
@@ -188,12 +189,71 @@ void MyGL::generateNewParticleSet() {
     poissonSampler->activeValidSamples.clear();
     poissonSampler->validSamples.clear();
 
+    // sample from new mesh
     poissonSampler->SampleMesh(filename);
 
+    simulation = new Simulation(new Particles(this, poissonSampler->validSamples.size()));
+
+    // transfer positions to particles
     for(int i = 0; i < poissonSampler->validSamples.size(); i++) {
         simulation->particles->positions(i, 0) = poissonSampler->validSamples[i]->pos[0];
         simulation->particles->positions(i, 1) = poissonSampler->validSamples[i]->pos[1];
         simulation->particles->positions(i, 2) = poissonSampler->validSamples[i]->pos[2];
+    }
+}
+
+void MyGL::saveSet() {
+    output_filepath = QFileDialog::getSaveFileName(0, QString("Save Image"), QString("../rendered_images"), tr("*.txt"));
+    if(output_filepath.length() == 0)
+    {
+        return;
+    }
+    QFile file(output_filepath);
+    if (file.open(QIODevice::ReadWrite)) {
+        QTextStream stream(&file);
+
+        for(int i = 0; i < simulation->particles->positions.rows(); i++) {
+            stream << QString::number(simulation->particles->positions(i, 0)) << " "
+                      << QString::number(simulation->particles->positions(i, 1)) << " "
+                      << QString::number(simulation->particles->positions(i, 2)) << endl;
+        }
+
+    }
+}
+
+void MyGL::loadSet() {
+
+    QString filepath = QFileDialog::getOpenFileName(0, QString("Load Particles"), QString("../rendered_images"), tr("*.txt"));
+    if(filepath.length() == 0)
+    {
+        return;
+    }
+
+    QFile file(filepath);
+    std::vector<glm::vec3> positions = std::vector<glm::vec3>();
+
+    if(file.open(QIODevice::ReadOnly))
+    {
+        while(!file.atEnd())
+        {
+            QString line = file.readLine().trimmed();
+            QStringList pos = line.split(QRegularExpression("\\s+"));
+            if(pos.count() == 3)
+            {
+                positions.push_back(glm::vec3(pos.at(0).toFloat(),
+                                              pos.at(1).toFloat(),
+                                              pos.at(2).toFloat()));
+            }
+        }
+        file.close();
+    }
+
+    simulation = new Simulation(new Particles(this, positions.size()));
+
+    for(int i = 0; i < simulation->particles->positions.rows(); i++) {
+        simulation->particles->positions(i, 0) = positions[i][0];
+        simulation->particles->positions(i, 1) = positions[i][1];
+        simulation->particles->positions(i, 2) = positions[i][2];
     }
 }
 

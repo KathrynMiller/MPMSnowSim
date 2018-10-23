@@ -42,6 +42,9 @@ private:
     Simulation* simulation;
     PoissonSampler* poissonSampler;
 
+    QString output_filepath;
+
+
 public:
     explicit MyGL(QWidget *parent = 0);
     ~MyGL();
@@ -56,7 +59,12 @@ protected:
 private slots:
     /// Slot that gets called ~60 times per second
     void timerUpdate();
+    // sample new mesh
     void generateNewParticleSet();
+    // save current set of particles
+    void saveSet();
+    // load existing preset particles
+    void loadSet();
 };
 
 
