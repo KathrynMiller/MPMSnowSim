@@ -44,6 +44,9 @@ private:
 
     QString output_filepath;
 
+    // true if the simulation has been started
+    bool running;
+
 
 public:
     explicit MyGL(QWidget *parent = 0);
@@ -65,6 +68,8 @@ private slots:
     void saveSet();
     // load existing preset particles
     void loadSet();
+    // sets running to true when button to start sim is pressed
+    void runSim();
 };
 
 

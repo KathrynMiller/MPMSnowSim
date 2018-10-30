@@ -21,7 +21,7 @@ MyGL::MyGL(QWidget *parent)
       m_geomCylinder(this), m_geomSphere(this),
       m_progLambert(this), m_progFlat(this),
       m_glCamera(), simulation(new Simulation(new Particles(this, 1000))),
-      time(QDateTime::currentMSecsSinceEpoch()), poissonSampler(new PoissonSampler())
+      time(QDateTime::currentMSecsSinceEpoch()), poissonSampler(new PoissonSampler()), running(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -255,6 +255,12 @@ void MyGL::loadSet() {
         simulation->particles->positions(i, 1) = positions[i][1];
         simulation->particles->positions(i, 2) = positions[i][2];
     }
+
+    simulation->particles->create();
+}
+
+void MyGL::runSim() {
+    running = true;
 }
 
 // MyGL's constructor links timerUpdate() to a timer that fires 60 times per second.
@@ -266,9 +272,10 @@ void MyGL::timerUpdate()
     //reset time
     time = t;
 
-    simulation->particles->destroy();
-    simulation->RunSimulation();
-    simulation->particles->create();
+    if(running) {
+        simulation->isRunning = true;
+        simulation->RunSimulation();
+    }
 
     update();
 }

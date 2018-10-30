@@ -7,7 +7,11 @@
 #include <QOpenGLShaderProgram>
 #include <la.h>
 
-//template <unsigned int numParticles>
+struct KernelWeights {
+    Eigen::Matrix3f N;
+    Eigen::Matrix3f N_deriv;
+};
+
 class Particles: public Drawable
 {
 public:
@@ -19,9 +23,14 @@ public:
     Eigen::MatrixXd masses;
     Eigen::MatrixXd volumes;
     Eigen::MatrixXd velocities;
+    std::vector<KernelWeights*> kernelWeights;
 
     Particles(GLWidget277 *context, int numParticles);
     void create() override;
     GLenum drawMode() override;
 
+
+
 };
+
+

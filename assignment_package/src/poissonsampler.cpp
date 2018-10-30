@@ -1,5 +1,6 @@
 #include "poissonsampler.h"
 #include "warpfunctions.h"
+#include "la.h"
 
 PoissonSampler::PoissonSampler() : objLoader(new ObjLoader()), sampler(Sampler(5, 5))
 {}
@@ -35,12 +36,13 @@ bool PoissonSampler::isWithinObj(glm::vec3 point) {
         }
     }
     return false;
+
 }
 
 bool PoissonSampler::isWithinBounds(glm::vec3 point) {
-    if(point[0] > objLoader->minCorner[0] && point[0] < objLoader->maxCorner[0]) {
-        if(point[1] > objLoader->minCorner[1] && point[1] < objLoader->maxCorner[1]) {
-            if(point[2] > objLoader->minCorner[0] && point[2] < objLoader->maxCorner[2]) {
+    if(point[0] >= objLoader->minCorner[0] && point[0] <= objLoader->maxCorner[0]) {
+        if(point[1] >= objLoader->minCorner[1] && point[1] <= objLoader->maxCorner[1]) {
+            if(point[2] >= objLoader->minCorner[2] && point[2] <= objLoader->maxCorner[2]) {
                 return true;
             }
         }
@@ -63,7 +65,7 @@ glm::vec3 PoissonSampler::sampleNewPoint() {
 }
 
 glm::vec3 PoissonSampler::sampleInSphere(glm::vec3 center) {
-    /*
+
     float val = 1.0f;
     float x = sampler.Get2D().x * val * radius;
     float y = sampler.Get2D().x * val * radius;
@@ -74,7 +76,14 @@ glm::vec3 PoissonSampler::sampleInSphere(glm::vec3 center) {
     y = (y > factor) ? center[1] + y : center[1] - y;
     z = (z > factor) ? center[2] + z : center[2] - z;
     return glm::vec3(x, y, z);
-*/
+
+    // all from 0 to 1, want to be from -2r to 2r
+    //    float x = sampler.Get2D().x * radius;
+    //    float y = sampler.Get2D().x * radius;
+    //    float z = sampler.Get2D().x * radius;
+
+
+
     /*
     float theta = sampler.Get1D() * 360;
     float new_radius = (sampler.Get1D() * radius) + radius;
@@ -85,7 +94,7 @@ glm::vec3 PoissonSampler::sampleInSphere(glm::vec3 center) {
     return glm::vec3(newx, newy, newz);
 */
     glm::vec3 unitCoord = WarpFunctions::squareToSphereUniform(sampler.Get2D());
-    return (unitCoord * (sampler.Get1D() * radius) + radius) + center;
+    return (unitCoord * (sampler.Get2D().x * radius) + radius) + center;
 
 
 }
@@ -94,9 +103,9 @@ glm::vec3 PoissonSampler::posOnGrid(glm::vec3 pos)
 {
     glm::vec3 min = objLoader->minCorner;
 
-    int x = (int)(glm::clamp(((pos[0] - min[0])/radius), 0.0f, voxelDim[0] - 1));
-    int y = (int)(glm::clamp(((pos[1] - min[1])/radius), 0.0f, voxelDim[1] - 1));
-    int z = (int)(glm::clamp(((pos[2] - min[2])/radius), 0.0f, voxelDim[2] - 1));
+    int x = (int)(glm::clamp(((pos[0] - min[0])/radius), 0.0f, voxelDim[0] - 1.0f));
+    int y = (int)(glm::clamp(((pos[1] - min[1])/radius), 0.0f, voxelDim[1] - 1.0f));
+    int z = (int)(glm::clamp(((pos[2] - min[2])/radius), 0.0f, voxelDim[2] - 1.0f));
 
     return glm::vec3(x, y, z);
 }
@@ -106,17 +115,19 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
     objLoader->LoadOBJ(meshFileName);
     initializeVars();
 
-    // code for testing naive intersections
 
-    for(int i = 0; i < 6000; i++) {
+    // code for testing naive intersections
+    int numParticles = 100;
+    for(int i = 0; i < numParticles; i++) {
         glm::vec3 p = sampleNewPoint();
 
         if(isWithinBounds(p) && isWithinObj(p)) {
             validSamples.push_back(new Sample(p, glm::vec3()));
         }
     }
-/*
 
+
+/*
     std::vector<Sample*> computedSampled = std::vector<Sample*>();
 
     std::vector<std::vector<std::vector<Sample*>>> backgroundGrid = std::vector<std::vector<std::vector<Sample*>>>(voxelDim[0],
@@ -138,15 +149,31 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
         for (int i = 0; i < K; i++) {
             glm::vec3 pos = sampleInSphere(x_i->pos);
 
+            if(pos[0] < 0 && pos[1] < 0) {
+                int z = 0;
+            }
             //note must make sure ^^ provides valid position that will be within the current grid area so sampling must check that first
             glm::vec3 gLoc = posOnGrid(pos);
 
             // check surrounding voxels to see if point is valid
-            glm::vec3 checkingMin = glm::vec3(fmax(x_i->gridPos[0] - 1, 0),
-                    fmax(x_i->gridPos[1] - 1, 0), fmax(x_i->gridPos[2] - 1, 0));
-            glm::vec3 checkingMax = glm::vec3(fmin(x_i->gridPos[0] + 1, voxelDim[0] - 1),
-                    fmin(x_i->gridPos[1] + 1, voxelDim[1] - 1), fmin(x_i->gridPos[2] + 1, voxelDim[2] - 1));
+            glm::vec3 checkingMin = glm::vec3(fmax(x_i->gridPos[0] - 1.0, 0.0),
+                    fmax(x_i->gridPos[1] - 1.0, 0.0), fmax(x_i->gridPos[2] - 1.0, 0.0));
+            glm::vec3 checkingMax = glm::vec3(fmin(x_i->gridPos[0] + 1.0, voxelDim[0] - 1.0),
+                    fmin(x_i->gridPos[1] + 1.0, voxelDim[1] - 1.0), fmin(x_i->gridPos[2] + 1.0, voxelDim[2] - 1.0));
 
+/*
+            glm::vec3 div = glm::vec3(voxelDim)/radius;
+            float factor = 4;
+            glm::vec3 checkingMin(0.0f);
+            glm::vec3 checkingMax(0.0f);
+            for (int j=0; j<3; j++) {
+                checkingMin[j] = pos[j] - factor*div[j];
+                checkingMax[j] = pos[j] + factor*div[j];
+            }
+            checkingMin = posOnGrid(checkingMin);
+            checkingMax = posOnGrid(checkingMax);
+*/
+/*
             // check if sampled point in sphere is valid
             // i.e. it is not the same as our current random point and it is in the correct radius range
             bool valid = true;
@@ -160,7 +187,7 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
                             }
                             // check if within range of R - 2R
                             float dist = glm::distance(pos, x_i->pos);
-                           // valid &= (dist >= radius && dist <= (2.0 * radius));
+                            valid &= (dist >= radius && dist <= (2.0 * radius));
                         }
                     }
                 }
@@ -191,11 +218,10 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
     } //end: while(activeValidSamples.size() > 0)
 
     for (Sample* s : computedSampled) {
-        if (isWithinObj(s->pos)) {
+        if (isWithinBounds(s->pos)) {// change back to is within obj
             validSamples.push_back(s);
         }
     }
-
 */
 }
 

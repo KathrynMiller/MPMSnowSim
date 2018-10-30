@@ -23,7 +23,8 @@ SOURCES += \
     $$PWD/scene/transform.cpp \
     $$PWD/poissonsampler.cpp \
     $$PWD/sampler.cpp \
-    $$PWD/warpfunctions.cpp
+    $$PWD/warpfunctions.cpp \
+    $$PWD/grid.cpp
 
 HEADERS += \
     $$PWD/la.h \
@@ -47,6 +48,7 @@ HEADERS += \
     $$PWD/scene/transform.h \
     $$PWD/poissonsampler.h \
     $$PWD/sampler.h \
-    $$PWD/warpfunctions.h
+    $$PWD/warpfunctions.h \
+    $$PWD/grid.h
 
 DISTFILES +=
