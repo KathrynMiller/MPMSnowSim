@@ -200,6 +200,7 @@ void MyGL::generateNewParticleSet() {
         simulation->particles->positions(i, 1) = poissonSampler->validSamples[i]->pos[1];
         simulation->particles->positions(i, 2) = poissonSampler->validSamples[i]->pos[2];
     }
+    simulation->particles->create();
 }
 
 void MyGL::saveSet() {
@@ -260,7 +261,14 @@ void MyGL::loadSet() {
 }
 
 void MyGL::runSim() {
-    running = true;
+    // select location to save obj files
+    QString output_filepath = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                "/home",
+                                                QFileDialog::ShowDirsOnly
+                                                | QFileDialog::DontResolveSymlinks);
+    //output_filepath = QFileDialog::getSaveFileName(0, QString("Save Image"), QString("../rendered_images"), tr("*.txt"));
+    simulation->isRunning = true;
+    simulation->RunSimulation(output_filepath);
 }
 
 // MyGL's constructor links timerUpdate() to a timer that fires 60 times per second.
@@ -271,11 +279,6 @@ void MyGL::timerUpdate()
     int64_t dt = t - time;
     //reset time
     time = t;
-
-    if(running) {
-        simulation->isRunning = true;
-        simulation->RunSimulation();
-    }
-
+// set dt of sim?
     update();
 }

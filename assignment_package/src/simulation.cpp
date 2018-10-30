@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "la.h"
 #include "math.h"
+#include "QFileDialog";
 
 Simulation::Simulation(Particles* p): particles(p), grid(nullptr)
 {
@@ -88,8 +89,10 @@ void Simulation::fillKernelWeights() {
     // for each particle
     for(int p = 0; p < particles->positions.rows(); p++) {
 
-        glm::vec3 particle = toVec3(particles->positions, p);
-        glm::vec3 baseNode = getBaseNode(particle);
+        glm::vec3 particle = toVec3(particles->positions, p); // world space pos
+        glm::vec3 gridOffset = (particle - grid->origin) / grid->cellsize; // pos on grid in cellsize-units
+        glm::vec3 baseNode = getBaseNode(particle); // in grid coordinates
+        glm::vec3 baseNodeOffset = gridOffset - baseNode;
 
         // kernel for particle p
         KernelWeights* kernelWeight = particles->kernelWeights[p];
@@ -98,12 +101,13 @@ void Simulation::fillKernelWeights() {
             for(int j = 0; j < 3; j++) { // columns of N and N'
 
                 // node offset from the curent particle's node
-                glm::vec3 currNode = baseNode;
+               // glm::vec3 currNode = baseNodeOffset - j;
                 // add j in the ith dimension
-                currNode[i] += j;
-
-                kernelWeight->N(i, j) = funcN(1.0 / grid->cellsize * (particle[i] - currNode[i] * grid->cellsize));
-                kernelWeight->N_deriv(i, j) = gradN(1.0 / grid->cellsize * (particle[i] - currNode[i] * grid->cellsize));
+             //   currNode[i] += j;
+// (xp - xi) / cellsize
+                float x = baseNodeOffset[i] - j;//1.0 / grid->cellsize * (particle[i] - currNode[i] * grid->cellsize);
+                kernelWeight->N(i, j) = funcN(x);
+                kernelWeight->N_deriv(i, j) = gradN(x);
             }
         }
     }
@@ -135,8 +139,8 @@ void Simulation::P2G() {
                     float gridMass = grid->getMass(currNode) + (weight * particles->masses(p));
                     glm::vec3 gridMomentum = grid->getMomentum(currNode) + (weight * pMass * pVelocity);
 
-                    glm::vec3 gridVelocity = glm::vec3(0.0);
-                    if(gridMass > 0) {
+                    glm::vec3 gridVelocity = glm::vec3(0.0, 0.0, 0.0);
+                    if(gridMass > 0.0) {
                         gridVelocity = gridMomentum / gridMass;
                     }
 
@@ -188,9 +192,9 @@ void Simulation::updateParticlePositions(float dt) {
     }
 }
 
-void Simulation::RunSimulation() {
+void Simulation::RunSimulation(QString output_filepath) {
 
-    float dt = .05;
+    float dt = .5;
     // make new grid
     initializeGrid();
 
@@ -207,6 +211,27 @@ void Simulation::RunSimulation() {
         // add code to write out to obj files
         particles->destroy();
         particles->create();
+        saveToObj(output_filepath);
+
+        frameNumber++;
         i--;
+    }
+}
+
+void Simulation::saveToObj(QString output_filepath) {
+    if(output_filepath.length() == 0)
+    {
+        return;
+    }
+    QFile file(output_filepath + "/frame_" + QString::number(frameNumber) + ".txt");
+    if (file.open(QIODevice::ReadWrite)) {
+        QTextStream stream(&file);
+
+        for(int i = 0; i < particles->positions.rows(); i++) {
+            stream << "v " << QString::number(particles->positions(i, 0)) << " "
+                      << QString::number(particles->positions(i, 1)) << " "
+                      << QString::number(particles->positions(i, 2)) << endl;
+        }
+
     }
 }

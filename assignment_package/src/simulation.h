@@ -18,6 +18,8 @@ public:
 
     int numParticles;
 
+    int frameNumber = 0;
+
     bool isRunning = false;
 
     int Dimension = 2; // dimensions of the grid. start with xy and move to xyz after working
@@ -39,8 +41,11 @@ public:
     // calculations for one timestep of the sim
     void updateParticlePositions(float dt);
 
+    // saves current particle positions in an obj file
+    void saveToObj(QString output_filepath);
 
     // updates the particles positions in accordance with the MPM paper
-    void RunSimulation();
+    // takes in the file path where the obj files for each step will be stored
+    void RunSimulation(QString output_filepath);
 
 };

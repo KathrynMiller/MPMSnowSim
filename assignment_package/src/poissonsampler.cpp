@@ -117,7 +117,7 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
 
 
     // code for testing naive intersections
-    int numParticles = 100;
+    int numParticles = 10;
     for(int i = 0; i < numParticles; i++) {
         glm::vec3 p = sampleNewPoint();
 
