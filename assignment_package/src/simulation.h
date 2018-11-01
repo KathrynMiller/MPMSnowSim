@@ -29,9 +29,9 @@ public:
     glm::vec3 getBaseNode(glm::vec3 particle);
     // P2G takes particles from lagrangian to eulerian grid space
     void P2G();
-    // compute N (
-    // compute N deriv (
+
     // compute forces
+
     // G2P
     void G2P();
 

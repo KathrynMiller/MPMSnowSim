@@ -8,7 +8,7 @@ class Grid
 public:
     Grid(glm::vec3 o, glm::vec3 d, float cellsize);
     // cellsize
-    float cellsize = .1;
+    float cellsize = .2;
     // dimension of grid in 3d space
     glm::vec3 dim;
     // lower left corner of the grid

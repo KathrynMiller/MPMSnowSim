@@ -11,7 +11,7 @@ positions(Eigen::MatrixXd(numParticles, 3)){
     masses = Eigen::MatrixXd::Zero(numParticles, 1);
     for(int i = 0; i < numParticles; i++) {
         kernelWeights.push_back(new KernelWeights());
-        velocities(i, 1) = -.1;
+        velocities(i, 1) = -1.0;
         masses(i) = 1.0;
         //kernelWeights[i]->N = Eigen::Matrix3d::Zero(3, 3);
     }
