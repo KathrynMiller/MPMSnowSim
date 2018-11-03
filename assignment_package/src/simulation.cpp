@@ -244,7 +244,7 @@ void Simulation::updateParticlePositions(float dt) {
 
 void Simulation::RunSimulation(QString output_filepath) {
 
-    float dt = .1;
+    float dt = .01;
     // make new grid
     initializeGrid();
 

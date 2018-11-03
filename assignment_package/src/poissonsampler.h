@@ -27,7 +27,7 @@ public:
 
 
     // radius for poisson sampling
-    float radius = 0.3;
+    float radius = 0.1;
     // number of samples to sample around a point (density)
     float K = 25;
    // bool threeDim;

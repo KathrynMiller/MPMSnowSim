@@ -32,10 +32,9 @@ void Particles::create() {
         color.push_back(glm::vec3(255, 255, 255));
     }
 
-    count = numParticles * 4;
+    count = numParticles;
 
     generateIdx();
-
     mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufIdx);
     mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertIdx.size() * sizeof(GLuint), vertIdx.data(), GL_STATIC_DRAW);
 

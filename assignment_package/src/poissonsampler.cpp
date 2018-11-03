@@ -115,7 +115,7 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
     objLoader->LoadOBJ(meshFileName);
     initializeVars();
 
-
+/*
     // code for testing naive intersections
     int numParticles = 10;
     for(int i = 0; i < numParticles; i++) {
@@ -125,9 +125,9 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
             validSamples.push_back(new Sample(p, glm::vec3()));
         }
     }
+*/
 
 
-/*
     std::vector<Sample*> computedSampled = std::vector<Sample*>();
 
     std::vector<std::vector<std::vector<Sample*>>> backgroundGrid = std::vector<std::vector<std::vector<Sample*>>>(voxelDim[0],
@@ -173,10 +173,10 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
             checkingMin = posOnGrid(checkingMin);
             checkingMax = posOnGrid(checkingMax);
 */
-/*
             // check if sampled point in sphere is valid
             // i.e. it is not the same as our current random point and it is in the correct radius range
             bool valid = true;
+            /*
             for (int j = checkingMin[0]; j <= checkingMax[0]; j++) {
                 for (int k = checkingMin[1]; k <= checkingMax[1]; k++) {
                     for(int l = checkingMin[2]; l <= checkingMax[2]; l++) {
@@ -191,6 +191,15 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
                         }
                     }
                 }
+            }
+            */
+            for(int i = 0; i < activeValidSamples.size(); i++) {
+                float dist = glm::distance(pos, activeValidSamples[i]->pos);
+                valid &= (dist >= radius && dist <= (2.0 * radius));
+            }
+            for(int i = 0; i < computedSampled.size(); i++) {
+                float dist = glm::distance(pos, computedSampled[i]->pos);
+                valid &= (dist >= radius && dist <= (2.0 * radius));
             }
 
             // if the point is valid on the grid and is within the bounding box of the obj
@@ -208,7 +217,7 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
 
         if (!addedK) {
 
-            //none of x_i's newly created samples were added so x_i no longer a valid active sample - add to list of final samples
+            //none of x_i's newly created samples were added so x_i no longer a active sample - add to list of final samples
             computedSampled.push_back(new Sample(x_i));
             activeValidSamples.erase(std::remove(activeValidSamples.begin(), activeValidSamples.end(), x_i),
                                      activeValidSamples.end());
@@ -222,7 +231,7 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
             validSamples.push_back(s);
         }
     }
-*/
+
 }
 
 

@@ -20,7 +20,7 @@ MyGL::MyGL(QWidget *parent)
     : GLWidget277(parent),
       m_geomCylinder(this), m_geomSphere(this),
       m_progLambert(this), m_progFlat(this),
-      m_glCamera(), simulation(new Simulation(new Particles(this, 1000))),
+      m_glCamera(), simulation(nullptr),
       time(QDateTime::currentMSecsSinceEpoch()), poissonSampler(new PoissonSampler()), running(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
@@ -113,8 +113,10 @@ void MyGL::paintGL()
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0,0,0));
     //Send the geometry's transformation matrix to the shader
     // check if mesh is bound and draw with appropriate shader
-    m_progLambert.setModelMatrix(model);
-    m_progLambert.draw(*(simulation->particles));
+    if(simulation != nullptr) {
+        m_progLambert.setModelMatrix(model);
+        m_progLambert.draw(*(simulation->particles));
+    }
 
 
     this->glDisable(GL_DEPTH_TEST);
