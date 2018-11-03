@@ -68,9 +68,9 @@ glm::vec3 PoissonSampler::sampleNewPoint() {
 glm::vec3 PoissonSampler::sampleInSphere(glm::vec3 center) {
 
     float val = 4.0f;
-    float x = (sampler.Get2D().x * val * radius) - val/2 * radius;
-    float y = (sampler.Get2D().x * val * radius) - val/2 * radius;
-    float z = (sampler.Get2D().x * val * radius) - val/2 * radius;
+    float x = (sampler.Get2D().x * val * radius) - val/2 * radius + center[0];
+    float y = (sampler.Get2D().x * val * radius) - val/2 * radius + center[1];
+    float z = (sampler.Get2D().x * val * radius) - val/2 * radius + center[2];
     return glm::vec3(x, y, z);
 
     // all from 0 to 1, want to be from -2r to 2r
@@ -118,7 +118,7 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
             std::vector<std::vector<Sample*>>(voxelDim[1],
             std::vector<Sample*>(voxelDim[2], nullptr)));
 
-    glm::vec3 firstPos = glm::vec3();//objLoader->faces.first()->points[1];
+    glm::vec3 firstPos = objLoader->faces.first()->points[1];
     glm::vec3 firstGridPos = posOnGrid(firstPos);
     Sample* start = new Sample(firstPos, firstGridPos);
     activeValidSamples.push_back(start);
@@ -132,6 +132,8 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
         bool addedK = false;
         for (int i = 0; i < K; i++) {
             glm::vec3 pos = sampleInSphere(x_i->pos);
+            std::cout << pos[0] << " " << pos[1] << " " << pos[2] << " " << "\n";
+
 
             //note must make sure ^^ provides valid position that will be within the current grid area so sampling must check that first
             glm::vec3 gLoc = posOnGrid(pos);
