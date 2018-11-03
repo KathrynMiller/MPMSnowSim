@@ -29,7 +29,7 @@ public:
     // radius for poisson sampling
     float radius = 0.1;
     // number of samples to sample around a point (density)
-    float K = 25;
+    float K = 50;
    // bool threeDim;
     glm::vec3 voxelDim; // number of voxels across each dimension for the grid
     float voxelSize; //actual size of the voxels [cubes so all 3 same val]

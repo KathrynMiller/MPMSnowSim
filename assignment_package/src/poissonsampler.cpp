@@ -1,6 +1,7 @@
 #include "poissonsampler.h"
 #include "warpfunctions.h"
 #include "la.h"
+#include "iostream"
 
 PoissonSampler::PoissonSampler() : objLoader(new ObjLoader()), sampler(Sampler(5, 5))
 {}
@@ -66,15 +67,10 @@ glm::vec3 PoissonSampler::sampleNewPoint() {
 
 glm::vec3 PoissonSampler::sampleInSphere(glm::vec3 center) {
 
-    float val = 1.0f;
-    float x = sampler.Get2D().x * val * radius;
-    float y = sampler.Get2D().x * val * radius;
-    float z = sampler.Get2D().x * val * radius;
-
-    float factor = radius * val/2.0f;
-    x = (x > factor) ? center[0] + x : center[0] - x;
-    y = (y > factor) ? center[1] + y : center[1] - y;
-    z = (z > factor) ? center[2] + z : center[2] - z;
+    float val = 4.0f;
+    float x = (sampler.Get2D().x * val * radius) - val/2 * radius;
+    float y = (sampler.Get2D().x * val * radius) - val/2 * radius;
+    float z = (sampler.Get2D().x * val * radius) - val/2 * radius;
     return glm::vec3(x, y, z);
 
     // all from 0 to 1, want to be from -2r to 2r
@@ -103,9 +99,10 @@ glm::vec3 PoissonSampler::posOnGrid(glm::vec3 pos)
 {
     glm::vec3 min = objLoader->minCorner;
 
-    int x = (int)(glm::clamp(((pos[0] - min[0])/radius), 0.0f, voxelDim[0] - 1.0f));
-    int y = (int)(glm::clamp(((pos[1] - min[1])/radius), 0.0f, voxelDim[1] - 1.0f));
-    int z = (int)(glm::clamp(((pos[2] - min[2])/radius), 0.0f, voxelDim[2] - 1.0f));
+    // change to voxel?
+    int x = (int)(glm::clamp(((pos[0] - min[0])/voxelSize), 0.0f, voxelDim[0] - 1.0f));
+    int y = (int)(glm::clamp(((pos[1] - min[1])/voxelSize), 0.0f, voxelDim[1] - 1.0f));
+    int z = (int)(glm::clamp(((pos[2] - min[2])/voxelSize), 0.0f, voxelDim[2] - 1.0f));
 
     return glm::vec3(x, y, z);
 }
@@ -114,19 +111,6 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
     // loads obj and builds kdtree
     objLoader->LoadOBJ(meshFileName);
     initializeVars();
-
-/*
-    // code for testing naive intersections
-    int numParticles = 10;
-    for(int i = 0; i < numParticles; i++) {
-        glm::vec3 p = sampleNewPoint();
-
-        if(isWithinBounds(p) && isWithinObj(p)) {
-            validSamples.push_back(new Sample(p, glm::vec3()));
-        }
-    }
-*/
-
 
     std::vector<Sample*> computedSampled = std::vector<Sample*>();
 
@@ -138,20 +122,17 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
     glm::vec3 firstGridPos = posOnGrid(firstPos);
     Sample* start = new Sample(firstPos, firstGridPos);
     activeValidSamples.push_back(start);
-    validSamples.push_back(start);
+    //validSamples.push_back(start);
     backgroundGrid[firstGridPos[0]][firstGridPos[1]][firstGridPos[2]] = start;
 
     while(activeValidSamples.size() > 0) {
 
         Sample* x_i = activeValidSamples[(int)(sampler.Get2D().x * activeValidSamples.size())];
-
+        std::cout << x_i-> pos[0] << " " << x_i-> pos[1] << " " << x_i-> pos[2] << " " << "\n";
         bool addedK = false;
         for (int i = 0; i < K; i++) {
             glm::vec3 pos = sampleInSphere(x_i->pos);
 
-            if(pos[0] < 0 && pos[1] < 0) {
-                int z = 0;
-            }
             //note must make sure ^^ provides valid position that will be within the current grid area so sampling must check that first
             glm::vec3 gLoc = posOnGrid(pos);
 
@@ -176,23 +157,25 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
             // check if sampled point in sphere is valid
             // i.e. it is not the same as our current random point and it is in the correct radius range
             bool valid = true;
-            /*
             for (int j = checkingMin[0]; j <= checkingMax[0]; j++) {
                 for (int k = checkingMin[1]; k <= checkingMax[1]; k++) {
                     for(int l = checkingMin[2]; l <= checkingMax[2]; l++) {
 
                         if (backgroundGrid[j][k][l] != nullptr) {
+
                             if (j == gLoc[0] && k == gLoc[1] && l == gLoc[2]) {
-                                valid = false; // not valid bc same loc as x_i;
+                                valid = false; // not valid bc same location as k particle;
                             }
-                            // check if within range of R - 2R
-                            float dist = glm::distance(pos, x_i->pos);
+                            glm::vec3 currGridCheck = backgroundGrid[j][k][l]->pos;
+                            // check if within range of R - 2R from this grid nodes particle
+                            float dist = glm::distance(pos, currGridCheck);
                             valid &= (dist >= radius && dist <= (2.0 * radius));
                         }
                     }
                 }
             }
-            */
+
+            /*
             for(int i = 0; i < activeValidSamples.size(); i++) {
                 float dist = glm::distance(pos, activeValidSamples[i]->pos);
                 valid &= (dist >= radius && dist <= (2.0 * radius));
@@ -201,9 +184,10 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
                 float dist = glm::distance(pos, computedSampled[i]->pos);
                 valid &= (dist >= radius && dist <= (2.0 * radius));
             }
+            */
 
             // if the point is valid on the grid and is within the bounding box of the obj
-            if (valid && isWithinBounds(pos)) {
+            if (valid/* && isWithinBounds(pos)*/) {
                 // valid then create and add to grid
                 Sample* kPoint = new Sample(pos, gLoc);
 
