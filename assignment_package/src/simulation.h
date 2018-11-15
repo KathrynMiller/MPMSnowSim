@@ -53,7 +53,7 @@ public:
 
     // helpers
     float getWeight(int particleId, glm::vec3 node);
-    Eigen::Vector3d getWeightGradient(KernelWeights *kernelWeight);
+    Eigen::Vector3d getWeightGradient(KernelWeights *kernelWeight, glm::vec3 particle, glm::vec3 node);
     // returns list of neighboring node positions for iteration
     std::vector<glm::vec3> getNeighbors(glm::vec3 particle);
 

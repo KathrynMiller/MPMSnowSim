@@ -67,15 +67,15 @@ static float funcN(float x) {
         return 0.f;
     }
 
-//    if (absX < 1.0f) {
-//        return 0.5f * pow(absX, 3.0f) - pow(x, 2.0f) + (2.0f / 3.0f);
-//    }
-//    else if (absX < 2.0f) {
-//        return (-1.0f / 6.0f) * pow(absX, 3.0f) + pow(x, 2.0f) -2.0f * absX + (4.0f / 3.0f);
-//    }
-//    else {
-//        return 0.f;
-//    }
+    //    if (absX < 1.0f) {
+    //        return 0.5f * pow(absX, 3.0f) - pow(x, 2.0f) + (2.0f / 3.0f);
+    //    }
+    //    else if (absX < 2.0f) {
+    //        return (-1.0f / 6.0f) * pow(absX, 3.0f) + pow(x, 2.0f) -2.0f * absX + (4.0f / 3.0f);
+    //    }
+    //    else {
+    //        return 0.f;
+    //    }
 }
 
 static float gradN(float x) {
@@ -88,15 +88,15 @@ static float gradN(float x) {
         return (-x * (1.5f - absX)) / absX;
     }
     return 0.f;
-//    if (absX < 1.0f) {
-//        return 0.5f * x * ((3.0f * absX) - 4.0f);
-//    }
-//    else if (absX < 2.0f) {
-//        return (-x * pow(absX - 2.0f, 2.0f)) / (2.0f * absX);
-//    }
-//    else {
-//        return 0.f;
-//    }
+    //    if (absX < 1.0f) {
+    //        return 0.5f * x * ((3.0f * absX) - 4.0f);
+    //    }
+    //    else if (absX < 2.0f) {
+    //        return (-x * pow(absX - 2.0f, 2.0f)) / (2.0f * absX);
+    //    }
+    //    else {
+    //        return 0.f;
+    //    }
 
 }
 
@@ -113,12 +113,13 @@ glm::vec3 Simulation::getBaseNode(glm::vec3 particle) {
     return baseNode;
 }
 
-Eigen::Vector3d Simulation::getWeightGradient(KernelWeights* kernelWeight) {
+Eigen::Vector3d Simulation::getWeightGradient(KernelWeights* kernelWeight, glm::vec3 particle, glm::vec3 node) {
+    glm::vec3 baseNode = getBaseNode(particle);
+    glm::vec3 offset = node - baseNode;
     Eigen::Vector3d weightGrad;
-    // divide by cellsize?
-    weightGrad << (kernelWeight->N_deriv(0, 0) / grid->cellsize) * kernelWeight->N(0, 1) * kernelWeight->N(0, 2),
-            kernelWeight->N(1, 0) * (kernelWeight->N_deriv(1, 1)/ grid->cellsize) * kernelWeight->N(1, 2),
-            kernelWeight->N(2, 0) * kernelWeight->N(2, 1) * (kernelWeight->N_deriv(2, 2)/ grid->cellsize);
+    weightGrad << (kernelWeight->N_deriv(0, int(offset[0])) / grid->cellsize) * kernelWeight->N(0, int(offset[1])) * kernelWeight->N(0, int(offset[2])),
+            kernelWeight->N(1, int(offset[0])) * (kernelWeight->N_deriv(1, int(offset[1]))/ grid->cellsize) * kernelWeight->N(1, int(offset[2])),
+            kernelWeight->N(2, int(offset[0])) * kernelWeight->N(2, int(offset[1])) * (kernelWeight->N_deriv(2, int(offset[2]))/ grid->cellsize);
     return weightGrad;
 }
 
@@ -167,22 +168,22 @@ void Simulation::fillKernelWeights() {
                 assert(x <= 2);
                 kernelWeight->N(i, j) = funcN(x);
                 kernelWeight->N_deriv(i, j) = gradN(x);
-
             }
         }
 
         // sum to test for valid weights
         double wSum = 0.0;
+        Eigen::Vector3d gradWSum = Eigen::Vector3d::Zero();
         std::vector<glm::vec3> neighbors = getNeighbors(particle);
         for(glm::vec3 n: neighbors) {
             wSum += getWeight(p, n);
+            gradWSum += getWeightGradient(kernelWeight, particle, n);
         }
         // test that weights are valid
-        Eigen::Vector3d gradW = getWeightGradient(kernelWeight);
         assert(abs(wSum - 1.0) < 1e-4);
-//        assert(abs(gradW(0, 0)) < 1e-4);
-//        assert(abs(gradW(1, 0)) < 1e-4);
-//        assert(abs(gradW(2, 0)) < 1e-4);
+        assert(abs(gradWSum(0, 0)) < 1e-4);
+        assert(abs(gradWSum(1, 0)) < 1e-4);
+        assert(abs(gradWSum(2, 0)) < 1e-4);
     }
 }
 
