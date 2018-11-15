@@ -29,9 +29,12 @@ bool PoissonSampler::isWithinObj(glm::vec3 point) {
     bool intersects1 = objLoader->Intersect(Ray(point, axis1), &numIntersections1);
     bool intersects2 = objLoader->Intersect(Ray(point, axis2), &numIntersections2);
     bool intersects3 = objLoader->Intersect(Ray(point, axis3), &numIntersections3);
+    bool odd1 = numIntersections1 % 2 != 0;
+    bool odd2 = numIntersections2 % 2 != 0;
+    bool odd3 = numIntersections3 % 2 != 0;
 
-    if(intersects1 && intersects2 && intersects3) {
-        if(numIntersections1 % 2 != 0 || numIntersections2 % 2 != 0 || numIntersections3 % 2 != 0)
+    if(intersects1 || intersects2 || intersects3) {
+        if(odd1 && odd2 && odd3)
         {
             return true;
         }
@@ -73,26 +76,6 @@ glm::vec3 PoissonSampler::sampleInSphere(glm::vec3 center) {
     float z = (sampler.Get2D().x * val * radius) - val/2 * radius + center[2];
     return glm::vec3(x, y, z);
 
-    // all from 0 to 1, want to be from -2r to 2r
-    //    float x = sampler.Get2D().x * radius;
-    //    float y = sampler.Get2D().x * radius;
-    //    float z = sampler.Get2D().x * radius;
-
-
-
-    /*
-    float theta = sampler.Get1D() * 360;
-    float new_radius = (sampler.Get1D() * radius) + radius;
-    // Find X & Y coordinates relative to point p
-    float newx = center[0] + new_radius * cos(glm::radians(theta));
-    float newy = center[1] + new_radius * sin(glm::radians(theta));
-    float newz = sqrt(pow(new_radius, 2.0) - pow(newx - center[0], 2.0) - pow(newy - center[1], 2.0)) - center[2];
-    return glm::vec3(newx, newy, newz);
-*/
-    glm::vec3 unitCoord = WarpFunctions::squareToSphereUniform(sampler.Get2D());
-    return (unitCoord * (sampler.Get2D().x * radius) + radius) + center;
-
-
 }
 
 glm::vec3 PoissonSampler::posOnGrid(glm::vec3 pos)
@@ -128,12 +111,9 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
     while(activeValidSamples.size() > 0) {
 
         Sample* x_i = activeValidSamples[(int)(sampler.Get2D().x * activeValidSamples.size())];
-        std::cout << x_i-> pos[0] << " " << x_i-> pos[1] << " " << x_i-> pos[2] << " " << "\n";
         bool addedK = false;
         for (int i = 0; i < K; i++) {
             glm::vec3 pos = sampleInSphere(x_i->pos);
-            std::cout << pos[0] << " " << pos[1] << " " << pos[2] << " " << "\n";
-
 
             //note must make sure ^^ provides valid position that will be within the current grid area so sampling must check that first
             glm::vec3 gLoc = posOnGrid(pos);
@@ -144,18 +124,6 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
             glm::vec3 checkingMax = glm::vec3(fmin(x_i->gridPos[0] + 1.0, voxelDim[0] - 1.0),
                     fmin(x_i->gridPos[1] + 1.0, voxelDim[1] - 1.0), fmin(x_i->gridPos[2] + 1.0, voxelDim[2] - 1.0));
 
-/*
-            glm::vec3 div = glm::vec3(voxelDim)/radius;
-            float factor = 4;
-            glm::vec3 checkingMin(0.0f);
-            glm::vec3 checkingMax(0.0f);
-            for (int j=0; j<3; j++) {
-                checkingMin[j] = pos[j] - factor*div[j];
-                checkingMax[j] = pos[j] + factor*div[j];
-            }
-            checkingMin = posOnGrid(checkingMin);
-            checkingMax = posOnGrid(checkingMax);
-*/
             // check if sampled point in sphere is valid
             // i.e. it is not the same as our current random point and it is in the correct radius range
             bool valid = true;
@@ -176,17 +144,6 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
                     }
                 }
             }
-
-            /*
-            for(int i = 0; i < activeValidSamples.size(); i++) {
-                float dist = glm::distance(pos, activeValidSamples[i]->pos);
-                valid &= (dist >= radius && dist <= (2.0 * radius));
-            }
-            for(int i = 0; i < computedSampled.size(); i++) {
-                float dist = glm::distance(pos, computedSampled[i]->pos);
-                valid &= (dist >= radius && dist <= (2.0 * radius));
-            }
-            */
 
             // if the point is valid on the grid and is within the bounding box of the obj
             if (valid/* && isWithinBounds(pos)*/) {
@@ -213,7 +170,7 @@ void PoissonSampler::SampleMesh(QString& meshFileName) {
     } //end: while(activeValidSamples.size() > 0)
 
     for (Sample* s : computedSampled) {
-        if (isWithinBounds(s->pos)) {// change back to is within obj
+        if (isWithinObj(s->pos)) {// change back to is within obj
             validSamples.push_back(s);
         }
     }

@@ -18,6 +18,8 @@ FORMS += forms/mainwindow.ui \
 
 RESOURCES += glsl.qrc
 
+QMAKE_CXXFLAGS += -g -O0
+
 *-clang*|*-g++* {
     message("Enabling additional warnings")
     CONFIG -= warn_on

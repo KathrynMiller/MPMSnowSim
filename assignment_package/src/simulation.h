@@ -19,10 +19,9 @@ public:
     int numParticles;
 
     int frameNumber = 0;
+    int numOutputFrames = 300; // default number of frames to simulate
 
     bool isRunning = false;
-
-    int Dimension = 2; // dimensions of the grid. start with xy and move to xyz after working
 
     void fillKernelWeights();
     // helper for finding the base node of a particle's kernel
@@ -30,13 +29,17 @@ public:
     // P2G takes particles from lagrangian to eulerian grid space
     void P2G();
 
+    // compute P, or hyperelasticity model that fills particle stresses
+    void computeStress();
     // compute forces
+    void computeForces();
+    void updateGradient(float dt);
 
     // G2P
     void G2P();
 
     // resets the grid to be of correct size for this timestep and sets all values to 0
-    void initializeGrid();
+    void initializeGrid(float cellsize);
 
     // calculations for one timestep of the sim
     void updateParticlePositions(float dt);
@@ -47,5 +50,11 @@ public:
     // updates the particles positions in accordance with the MPM paper
     // takes in the file path where the obj files for each step will be stored
     void RunSimulation(QString output_filepath);
+
+    // helpers
+    float getWeight(int particleId, glm::vec3 node);
+    Eigen::Vector3d getWeightGradient(KernelWeights *kernelWeight);
+    // returns list of neighboring node positions for iteration
+    std::vector<glm::vec3> getNeighbors(glm::vec3 particle);
 
 };

@@ -23,12 +23,15 @@ public:
     float getMass(glm::vec3 pos) const;
     glm::vec3 getMomentum(glm::vec3 pos) const;
     glm::vec3 getVelocity(glm::vec3 pos) const;
-   // KernelWeights* getKernelWeight(glm::vec3 pos);
+    glm::vec3 getForces(glm::vec3 pos) const;
 
     void setPosition(glm::vec3 pos, glm::vec3 val);
     void setMass(glm::vec3 pos, float val);
     void setMomentum(glm::vec3 pos, glm::vec3 val);
     void setVelocity(glm::vec3 pos, glm::vec3 val);
+    void setForces(glm::vec3 pos, glm::vec3 val);
+
+    void applyForces(float dt);
 
     void clear();
 
@@ -40,7 +43,7 @@ private:
     Eigen::MatrixXd gridMasses;
     Eigen::MatrixXd gridVelocities;
     Eigen::MatrixXd gridMomentum;
-//    std::vector<KernelWeights*> kernelWeights;
+    Eigen::MatrixXd gridForces;
 };
 
 

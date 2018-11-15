@@ -273,6 +273,7 @@ bool ObjLoader::triangleIntersection(Node* parent, const Ray &r, Intersection *i
         bool hitRight = triangleIntersection(parent->rightChild, r, isect, numIntersections);
         return hitLeft || hitRight;
     }
+    return false;
 
     /*
     if (hitLeft && !hitRight) {

@@ -251,6 +251,10 @@ void MyGL::loadSet() {
         file.close();
     }
 
+//    std::vector<glm::vec3> positions = std::vector<glm::vec3>();
+//    positions.push_back(glm::vec3(0, 0, 0));
+//    positions.push_back(glm::vec3(-.2, 0, .1));
+//    positions.push_back(glm::vec3(.3, 0, -.1));
     simulation = new Simulation(new Particles(this, positions.size()));
 
     for(int i = 0; i < simulation->particles->positions.rows(); i++) {
