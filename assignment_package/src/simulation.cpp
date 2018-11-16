@@ -49,7 +49,9 @@ void Simulation::initializeGrid(float cellsize) {
     // set grid origin and dimensions
     glm::vec3 origin = minCorner;
     glm::vec3 dim = (maxCorner - minCorner) / cellsize; // in cellsize units
-
+    dim[0] = ceil(dim[0]);
+    dim[1] = ceil(dim[1]);
+    dim[2] = ceil(dim[2]);
     grid = new Grid(origin, dim, cellsize);
 
 }
@@ -136,9 +138,9 @@ float Simulation::getWeight(int particleId, glm::vec3 node) {
 std::vector<glm::vec3> Simulation::getNeighbors(glm::vec3 particle) {
     glm::vec3 baseNode = getBaseNode(particle);
     std::vector<glm::vec3> neighbors = std::vector<glm::vec3>();
-    for(int i = 0; i < 3; i++) {
-        for(int j = 0; j < 3; j++) {
-            for(int k = 0; k < 3; k++) {
+    for(int i = 0; i < 4; i++) {
+        for(int j = 0; j < 4; j++) {
+            for(int k = 0; k < 4; k++) {
                 glm::vec3 currNode = baseNode + glm::vec3(i, j, k);
                 neighbors.push_back(currNode);
             }
@@ -158,11 +160,11 @@ void Simulation::fillKernelWeights() {
         //        glm::vec3 baseNodeOffset = gridOffset - baseNode;
         // kernel for particle p
         KernelWeights* kernelWeight = particles->kernelWeights[p];
-        kernelWeight->N = Eigen::MatrixXd::Zero(3, 3);
-        kernelWeight->N_deriv = Eigen::MatrixXd::Zero(3, 3);
+        kernelWeight->N = Eigen::MatrixXd::Zero(3, 4);
+        kernelWeight->N_deriv = Eigen::MatrixXd::Zero(3, 4);
 
         for(int i = 0; i < grid->Dimension; i++) { // rows of N and N'
-            for(int j = 0; j < 3; j++) { // columns of N and N'
+            for(int j = 0; j < 4; j++) { // columns of N and N'
 
                 float x = baseNodeOffset[i] - j;
                 assert(x <= 2);
@@ -197,7 +199,7 @@ void Simulation::P2G() {
         std::vector<glm::vec3> neighborNodes = getNeighbors(particle);
 
         // for each particle, calculate the nodes it affects and add its contribution to that grid node's weight sum for velocity and momentum
-        for(int i = 0; i < 3; i++) {
+        for(int i = 0; i < neighborNodes.size(); i++) {
             glm::vec3 currNode = neighborNodes[i];
             // weight for this node based on particle kernel
             float weight = getWeight(p, currNode);
@@ -317,14 +319,14 @@ void Simulation::computeForces() {
 
 void Simulation::G2P() {
     // clear particle velocities;
-    // particles->velocities = Eigen::MatrixXd::Zero(numParticles, 3);
+     particles->velocities = Eigen::MatrixXd::Zero(numParticles, 3);
 
     for(int p = 0; p < particles->numParticles; p++) {
 
         glm::vec3 particle = toVec3(particles->positions, p);
         std::vector<glm::vec3> neighborNodes = getNeighbors(particle);
 
-        for(int i = 0; i < 3; i++) {
+        for(int i = 0; i < neighborNodes.size(); i++) {
             glm::vec3 currNode = neighborNodes[i];
 
             // weight for this node based on particle kernel

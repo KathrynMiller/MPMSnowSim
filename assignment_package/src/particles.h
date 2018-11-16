@@ -8,8 +8,8 @@
 #include <la.h>
 
 struct KernelWeights {
-    Eigen::Matrix3d N;
-    Eigen::Matrix3d N_deriv;
+    Eigen::MatrixXd N;
+    Eigen::MatrixXd N_deriv;
 };
 
 struct Deformation {
