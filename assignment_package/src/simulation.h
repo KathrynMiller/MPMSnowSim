@@ -7,7 +7,7 @@ class Simulation
 {
 
 public:
-    Simulation(Particles *p);
+    Simulation(Particles *p, int numFrames);
     ~Simulation();
 
     // the set of particles over which to run the sim
@@ -19,7 +19,7 @@ public:
     int numParticles;
 
     int frameNumber = 0;
-    int numOutputFrames = 300; // default number of frames to simulate
+    int numOutputFrames; // default number of frames to simulate
 
     bool isRunning = false;
 
@@ -46,10 +46,11 @@ public:
 
     // saves current particle positions in an obj file
     void saveToObj(QString output_filepath);
+    void saveToBgeo(QString output_filepath);
 
     // updates the particles positions in accordance with the MPM paper
     // takes in the file path where the obj files for each step will be stored
-    void RunSimulation(QString output_filepath);
+    void RunSimulation(QString output_filepath, GLWidget277* mygl);
 
     // helpers
     float getWeight(int particleId, glm::vec3 node);

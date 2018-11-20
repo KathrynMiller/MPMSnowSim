@@ -57,9 +57,10 @@ void Grid::setMomentum(glm::vec3 pos, glm::vec3 val) {
 }
 
 void Grid::setVelocity(glm::vec3 pos, glm::vec3 val) {
-    gridVelocities(flat(pos[0], pos[1], pos[2]), 0) = val[0];
-    gridVelocities(flat(pos[0], pos[1], pos[2]), 1) = val[1];
-    gridVelocities(flat(pos[0], pos[1], pos[2]), 2) = val[2];
+    int row = flat(pos[0], pos[1], pos[2]);
+    gridVelocities(row, 0) = val[0];
+    gridVelocities(row, 1) = val[1];
+    gridVelocities(row, 2) = val[2];
 }
 
 void Grid::setForces(glm::vec3 pos, glm::vec3 val) {

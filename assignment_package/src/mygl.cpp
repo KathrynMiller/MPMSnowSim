@@ -194,7 +194,7 @@ void MyGL::generateNewParticleSet() {
     // sample from new mesh
     poissonSampler->SampleMesh(filename);
 
-    simulation = new Simulation(new Particles(this, poissonSampler->validSamples.size()));
+    simulation = new Simulation(new Particles(this, poissonSampler->validSamples.size()), numFrames);
 
     // transfer positions to particles
     for(int i = 0; i < poissonSampler->validSamples.size(); i++) {
@@ -255,7 +255,7 @@ void MyGL::loadSet() {
 //    positions.push_back(glm::vec3(0, 0, 0));
 //    positions.push_back(glm::vec3(-.2, 0, .1));
 //    positions.push_back(glm::vec3(.3, 0, -.1));
-    simulation = new Simulation(new Particles(this, positions.size()));
+    simulation = new Simulation(new Particles(this, positions.size()), numFrames);
 
     for(int i = 0; i < simulation->particles->positions.rows(); i++) {
         simulation->particles->positions(i, 0) = positions[i][0];
@@ -272,9 +272,8 @@ void MyGL::runSim() {
                                                 "/home",
                                                 QFileDialog::ShowDirsOnly
                                                 | QFileDialog::DontResolveSymlinks);
-    //output_filepath = QFileDialog::getSaveFileName(0, QString("Save Image"), QString("../rendered_images"), tr("*.txt"));
     simulation->isRunning = true;
-    simulation->RunSimulation(output_filepath);
+    simulation->RunSimulation(output_filepath, this);
 }
 
 // MyGL's constructor links timerUpdate() to a timer that fires 60 times per second.
@@ -287,4 +286,11 @@ void MyGL::timerUpdate()
     time = t;
 // set dt of sim?
     update();
+}
+int MyGL::getNumFrames() {
+    return numFrames;
+}
+
+void MyGL::updateFrameNum(int n) {
+    numFrames = n;
 }

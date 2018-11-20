@@ -36,6 +36,7 @@ private:
     QTimer timer;
     // stores time in milliseconds
     int time;
+    int numFrames = 300;
 
     Camera m_glCamera;
 
@@ -51,6 +52,8 @@ private:
 public:
     explicit MyGL(QWidget *parent = 0);
     ~MyGL();
+
+    int getNumFrames();
 
     void initializeGL();
     void resizeGL(int w, int h);
@@ -70,6 +73,8 @@ private slots:
     void loadSet();
     // sets running to true when button to start sim is pressed
     void runSim();
+    // lets you change the number of output frames in gui
+    void updateFrameNum(int n);
 };
 
 

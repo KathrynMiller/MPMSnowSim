@@ -7,8 +7,9 @@
 #include "eigen-git-mirror/Eigen/Dense"
 #include "eigen-git-mirror/Eigen/SVD"
 #include "eigen-git-mirror/Eigen/Core"
+#include "Partio.h"
 
-Simulation::Simulation(Particles* p): particles(p), grid(nullptr)
+Simulation::Simulation(Particles* p, int numFrames): particles(p), grid(nullptr), numOutputFrames(numFrames)
 {
     numParticles = p->numParticles;
 }
@@ -40,12 +41,10 @@ void Simulation::initializeGrid(float cellsize) {
         maxCorner[2] = std::max(p[2], maxCorner[2]);
     }
     // offset by 2 grid cells in each dimension (worldspace dimensions)
-    minCorner = minCorner - glm::vec3(cellsize * 2.0);
-    maxCorner = maxCorner + glm::vec3(cellsize  * 2.0);
+    minCorner = minCorner - glm::vec3(cellsize * 3.0);
+    maxCorner = maxCorner + glm::vec3(cellsize  * 3.0);
 
-    //    // testing one kernel size
-    //    minCorner = glm::vec3(-3.5 * cellsize);
-    //    maxCorner = glm::vec3(3.5 * cellsize);
+   // minCorner -= glm::vec3(cellsize * 30.0);
     // set grid origin and dimensions
     glm::vec3 origin = minCorner;
     glm::vec3 dim = (maxCorner - minCorner) / cellsize; // in cellsize units
@@ -104,14 +103,8 @@ static float gradN(float x) {
 
 // returns the local base node of particle p in grid coordinates
 glm::vec3 Simulation::getBaseNode(glm::vec3 particle) {
-
-    // position on grid in terms of cellsize
-    glm::vec3 gridOffset = (particle - grid->origin) / grid->cellsize;
-    // floor the particle to get its node's lower corner, then subtract half a cell in all directions and floor to get base
-    glm::vec3 baseNode = glm::vec3(floor(gridOffset[0]), floor(gridOffset[1]), floor(gridOffset[2]));
-    baseNode -= glm::vec3(0.5);
+    glm::vec3 baseNode = (particle - grid->origin - glm::vec3(grid->cellsize * 0.5));
     baseNode = glm::vec3(floor(baseNode[0]), floor(baseNode[1]), floor(baseNode[2]));
-
     return baseNode;
 }
 
@@ -156,18 +149,16 @@ void Simulation::fillKernelWeights() {
         glm::vec3 gridOffset = (particle - grid->origin) / grid->cellsize; // pos on grid in cellsize-units
         glm::vec3 baseNodeOffset = gridOffset - glm::vec3(floor(gridOffset[0] - 0.5), floor(gridOffset[1] - 0.5),
                 floor(gridOffset[2] - 0.5));
-        //        glm::vec3 baseNode = getBaseNode(particle);
-        //        glm::vec3 baseNodeOffset = gridOffset - baseNode;
         // kernel for particle p
         KernelWeights* kernelWeight = particles->kernelWeights[p];
         kernelWeight->N = Eigen::MatrixXd::Zero(3, 4);
         kernelWeight->N_deriv = Eigen::MatrixXd::Zero(3, 4);
 
-        for(int i = 0; i < grid->Dimension; i++) { // rows of N and N'
+        for(int i = 0; i < 3; i++) { // rows of N and N'
             for(int j = 0; j < 4; j++) { // columns of N and N'
 
                 float x = baseNodeOffset[i] - j;
-                assert(x <= 2);
+                // assert(x <= 2);
                 kernelWeight->N(i, j) = funcN(x);
                 kernelWeight->N_deriv(i, j) = gradN(x);
             }
@@ -191,6 +182,9 @@ void Simulation::fillKernelWeights() {
 
 
 void Simulation::P2G() {
+    if(frameNumber == 3) {
+        int x = 0;
+    }
     // initialize grid values to 0
     grid->clear();
     for(int p = 0; p < particles->numParticles; p++) {
@@ -246,8 +240,8 @@ void Simulation::computeStress() {
         Eigen::Matrix3d U = svd.matrixU();
         Eigen::Vector3d Sigma = svd.singularValues(); // 3x1 vector representing diagonal values of sigma
         Eigen::Matrix3d V = svd.matrixV();
-        /*
-        Eigen::RowVector3d temp;
+
+        Eigen::RowVector3d temp = Eigen::RowVector3d::Zero(1, 3);
         for (unsigned int i = 1; i < Sigma.size(); ++i) {
             for (unsigned int j = i; j > 0 && Sigma(j - 1, 0) < Sigma(j, 0); j--) {
                 std::swap(Sigma(j, 0), Sigma(j - 1, 0));
@@ -269,7 +263,7 @@ void Simulation::computeStress() {
             V.col(2) *= -1;
             Sigma(2, 0) *= -1;
         }
-*/
+
         Eigen::Matrix3d R = U * V.transpose();
         Eigen::Matrix3d jFInvTranspose = ComputeJFInvTranspose(F);
         // use it to calculate the stress and put this in the stress vector
@@ -277,50 +271,48 @@ void Simulation::computeStress() {
         Eigen::Matrix3d newStress = 2.0 * particles->mus(i, 0) * (F - R) + particles->lambdas(i, 0) * (J - 1) * jFInvTranspose;
         particles->deformations[i]->stress = newStress;
     }
+
 }
 
 void Simulation::computeForces() {
 
+    if(frameNumber == 35) {
+        int x = 9;
+    }
     for(int p = 0; p < particles->numParticles; p++) {
 
         glm::vec3 particle = toVec3(particles->positions, p);
-        glm::vec3 baseNode = getBaseNode(particle);
-        glm::vec3 currNode;
-        // for each particle, calculate the nodes it affects and use its deformation to add to its grid node force
-        for(int i = 0; i < 3; i++) {
-            for(int j = 0; j < 3; j++) {
-                for(int k = 0; k < 3; k++) {
-                    currNode = baseNode + glm::vec3(i, j, k);
-                    KernelWeights* kernelWeight = particles->kernelWeights[p];
-                    // weight for this node based on particle kernel
-                    Eigen::Vector3d weightGrad(3);
-                    // divide by cellsize?
-                    weightGrad << (kernelWeight->N_deriv(0, 0) / grid->cellsize) * kernelWeight->N(0, 1) * kernelWeight->N(0, 2),
-                            kernelWeight->N(1, 0) * (kernelWeight->N_deriv(1, 1)/ grid->cellsize) * kernelWeight->N(1, 2),
-                            kernelWeight->N(2, 0) * kernelWeight->N(2, 1) * (kernelWeight->N_deriv(2, 2)/ grid->cellsize);
+        std::vector<glm::vec3> neighborNodes = getNeighbors(particle);
 
-                    glm::vec3 force =  grid->getForces(currNode);
-                    Eigen::Vector3d f;
-                    f<< force[0], force[1], force[2];
-                    float volume = particles->volumes(p, 0);
-                    Eigen::Matrix3d s = particles->deformations[p]->stress;
-                    Eigen::Matrix3d fT = particles->deformations[p]->F.transpose();
-                    Eigen::Vector3d sumTerm = volume * s * fT * weightGrad;
-                    f(0) = f(0) - sumTerm(0);
-                    f(1) = f(1) - sumTerm(1);
-                    f(2) = f(2) - sumTerm(2);
-                    grid->setForces(currNode, glm::vec3(f(0), f(1), f(2)));
-                }
-            }
-        } // i, j, k
+        // for each particle, calculate the nodes it affects and use its deformation to add to its grid node force
+        for(int i = 0; i < neighborNodes.size(); i++) {
+            glm:: vec3 currNode = neighborNodes[i];
+            KernelWeights* kernelWeight = particles->kernelWeights[p];
+            // weight for this node based on particle kernel
+            Eigen::Vector3d weightGrad = getWeightGradient(kernelWeight, particle, currNode);
+
+            glm::vec3 force =  grid->getForces(currNode);
+            Eigen::Vector3d f = Eigen::Vector3d::Zero(3, 1);
+            f<< force[0], force[1], force[2];
+            float volume = particles->volumes(p, 0);
+            Eigen::Matrix3d s = particles->deformations[p]->stress;
+            Eigen::Matrix3d fT = particles->deformations[p]->F.transpose();
+            Eigen::Vector3d sumTerm = volume * s * fT * weightGrad;
+            f(0) = f(0) - sumTerm(0);
+            f(1) = f(1) - sumTerm(1);
+            f(2) = f(2) - sumTerm(2);
+            grid->setForces(currNode, glm::vec3(f(0), f(1), f(2)));
+        } // end i
 
     } // end for each particle
 }
 
 void Simulation::G2P() {
     // clear particle velocities;
-     particles->velocities = Eigen::MatrixXd::Zero(numParticles, 3);
-
+    particles->velocities = Eigen::MatrixXd::Zero(numParticles, 3);
+    if(frameNumber == 3) {
+        int x = 0;
+    }
     for(int p = 0; p < particles->numParticles; p++) {
 
         glm::vec3 particle = toVec3(particles->positions, p);
@@ -331,14 +323,15 @@ void Simulation::G2P() {
 
             // weight for this node based on particle kernel
             float weight = getWeight(p, currNode);
-            glm::vec3 gridVelocity = grid->getVelocity(currNode);
 
+            glm::vec3 gridVelocity = grid->getVelocity(currNode);
             glm::vec3 newVel = glm::vec3(particles->velocities(p, 0) + weight * gridVelocity[0],
                     particles->velocities(p, 1) + weight * gridVelocity[1],
                     particles->velocities(p, 2) + weight * gridVelocity[2]);
             particles->velocities(p, 0) = newVel[0];
             particles->velocities(p, 1) = newVel[1];
             particles->velocities(p, 2) = newVel[2];
+
         }
 
     }
@@ -356,7 +349,7 @@ void Simulation::updateParticlePositions(float dt) {
 
 
         // need to clamp positions to box
-        glm::vec3 origMin = grid->origin + glm::vec3(2.0 * grid->cellsize);
+        glm::vec3 origMin = grid->origin + glm::vec3(3.0 * grid->cellsize);
         if(particles->positions(p, 0) < origMin[0]) {
             particles->positions(p, 0) = origMin[0];
         }
@@ -367,7 +360,7 @@ void Simulation::updateParticlePositions(float dt) {
             particles->positions(p, 2) = origMin[2];
         }
 
-        glm::vec3 origMax = grid->origin + (grid->dim * grid->cellsize) - glm::vec3(2.0 * grid->cellsize);
+        glm::vec3 origMax = grid->origin + (grid->dim * grid->cellsize) - glm::vec3(3.0 * grid->cellsize);
         if(particles->positions(p, 0) > origMax[0]) {
             particles->positions(p, 0) = origMax[0];
         }
@@ -387,30 +380,25 @@ void Simulation::updateGradient(float dt) {
     for(int p = 0; p < particles->numParticles; p++) {
 
         glm::vec3 particle = toVec3(particles->positions, p);
-        glm::vec3 baseNode = getBaseNode(particle);
-        Eigen::MatrixXd gradV(3, 3);
+        std::vector<glm::vec3> neighborNodes = getNeighbors(particle);
+        Eigen::MatrixXd gradV = Eigen::MatrixXd::Zero(3, 3);
 
         // for each particle, calculate the nodes it affects and add its contribution to that grid node's weight sum for velocity and momentum
-        for(int i = 0; i < 3; i++) {
-            for(int j = 0; j < 3; j++) {
-                for(int k = 0; k < 3; k++) {
-                    glm::vec3 currNode = baseNode + glm::vec3(i, j, k);
-                    KernelWeights* kernelWeight = particles->kernelWeights[p];
-                    // weight for this node based on particle kernel
-                    Eigen::MatrixXd weightGrad(1, 3); // row vec
-                    // divide by cellsize?
-                    float h = grid->cellsize;
-                    weightGrad << (kernelWeight->N_deriv(0, 0) / h) * kernelWeight->N(0, 1) * kernelWeight->N(0, 2),
-                            kernelWeight->N(1, 0) *(kernelWeight->N_deriv(1, 1)/ h) * kernelWeight->N(1, 2),
-                            kernelWeight->N(2, 0) * kernelWeight->N(2, 1) * (kernelWeight->N_deriv(2, 2)/ h);
+        for(int i = 0; i < neighborNodes.size(); i++) {
+            glm::vec3 currNode = neighborNodes[i];
+            KernelWeights* kernelWeight = particles->kernelWeights[p];
+            // weight for this node based on particle kernel
+            Eigen::RowVector3d weightGrad = Eigen::RowVector3d::Zero(1, 3); // row vec
+            Eigen::Vector3d grad = getWeightGradient(kernelWeight, particle, currNode);
+            weightGrad(0) = grad(0);
+            weightGrad(1) = grad(1);
+            weightGrad(2) = grad(2);
 
-                    glm::vec3 gridV = grid->getVelocity(currNode);
-                    Eigen::MatrixXd v(3, 1); // column vec
-                    v << gridV[0], gridV[1], gridV[2];
+            glm::vec3 gridV = grid->getVelocity(currNode);
+            Eigen::Vector3d v = Eigen::Vector3d::Zero(3, 1); // column vec
+            v << gridV[0], gridV[1], gridV[2];
 
-                    gradV = gradV + (v * weightGrad);
-                }
-            }
+            gradV = gradV + (v * weightGrad);
         }
         Eigen::MatrixXd res = (Eigen::Matrix3d::Identity(3, 3) + (dt * gradV));
         for (int i = 0; i < 3; i++) {
@@ -423,34 +411,43 @@ void Simulation::updateGradient(float dt) {
     }
 }
 
-void Simulation::RunSimulation(QString output_filepath) {
+void Simulation::RunSimulation(QString output_filepath, GLWidget277* mygl) {
 
-    float dt = pow(10.0, -6);
-    dt = .1;
+    float dt = pow(10.0, -4);
+   // dt = .01;
+
+    // dt <= cmax (.2 - .4) * h / vmax
+
     float cellSize = .1;
     // make new grid
     initializeGrid(cellSize);
 
     int i = numOutputFrames;
     while(i > 0) {
+        if(frameNumber == 3) {
+            int x = 0;
+        }
         fillKernelWeights();
         // transfer attributes to the grid
         P2G();
 
+        computeStress();
         // compute forces on grid
-        // computeForces();
-        // apply forces to grid
-        //grid->applyForces(dt);
+        computeForces();
+        // apply forces to grid velocity
+        grid->applyForces(dt);
         // transfer attributes back to particles
         G2P();
 
         //update particle positions
         updateParticlePositions(dt);
         // update F
-        // updateGradient(dt);
+        updateGradient(dt);
 
         saveToObj(output_filepath);
-
+//        saveToBgeo(output_filepath);
+//        particles->create();
+//        mygl->update();
         frameNumber++;
         i--;
     }
@@ -473,3 +470,30 @@ void Simulation::saveToObj(QString output_filepath) {
 
     }
 }
+
+
+void Simulation::saveToBgeo(QString output_filepath) {
+    if(output_filepath.length() == 0)
+    {
+        return;
+    }
+    QFile file(output_filepath + "/frame_" + QString::number(frameNumber) + ".geo");
+    if (file.open(QIODevice::ReadWrite)) {
+        QDataStream stream(&file);
+
+        // header
+        stream << "PGEOMETRYVS \n"
+               << "NPoints " << QString::number(numParticles) << " NPrims 0 \n"
+               << "NPointGroups 0 NPrimGroups 0 \n" <<
+                  "NPointAttrib 0 NVertexAttrib 0 NPrimAttrib 0 NAttrib 0 \n";
+        for(int i = 0; i < particles->positions.rows(); i++) {
+            stream << QString::number(particles->positions(i, 0)) << " "
+                   << QString::number(particles->positions(i, 1)) << " "
+                   << QString::number(particles->positions(i, 2)) << " 1 \n";
+        }
+
+    }
+}
+
+
+

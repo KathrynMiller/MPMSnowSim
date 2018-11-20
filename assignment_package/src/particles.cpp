@@ -5,8 +5,8 @@
 Particles::Particles(GLWidget277 *context, int numParticles): Drawable(context), numParticles(numParticles),
 positions(Eigen::MatrixXd(numParticles, 3)){
 
-    float mu = .1;//youngsMod / (2.0 * (1.0 + poissonsRatio));
-    float lambda = .1;//(youngsMod * poissonsRatio) / ((1.0 + poissonsRatio) * (1.0 - 2.0 * poissonsRatio));
+    float mu = youngsMod / (2.0 * (1.0 + poissonsRatio));
+    float lambda = (youngsMod * poissonsRatio) / ((1.0 + poissonsRatio) * (1.0 - 2.0 * poissonsRatio));
 
     // initialize other attributes of particles
     velocities = Eigen::MatrixXd::Zero(numParticles, 3);
@@ -20,13 +20,12 @@ positions(Eigen::MatrixXd(numParticles, 3)){
         deformations[i]->stress = Eigen::MatrixXd::Identity(3, 3);
         deformations[i]->F = Eigen::MatrixXd::Identity(3, 3);
 
-        velocities(i, 1) = -1.0;
+       // velocities(i, 1) = -1.0;
 
-        masses(i) = 1.0;// / numParticles;
+        masses(i) = 1.0 / numParticles;
         mus(i) = mu;
         lambdas(i) = lambda;
-        volumes(i) =  1.0;// / numParticles;//masses(i) / density;
-        //kernelWeights[i]->N = Eigen::Matrix3d::Zero(3, 3);
+        volumes(i) =  1.0 / numParticles; // masses(i) / density;
     }
 
 }

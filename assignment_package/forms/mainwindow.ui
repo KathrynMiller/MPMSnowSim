@@ -16,9 +16,9 @@
      <colorrole role="WindowText">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
-        <red>0</red>
-        <green>0</green>
-        <blue>0</blue>
+        <red>255</red>
+        <green>248</green>
+        <blue>245</blue>
        </color>
       </brush>
      </colorrole>
@@ -106,8 +106,8 @@
      <colorrole role="Window">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
-        <red>0</red>
-        <green>53</green>
+        <red>215</red>
+        <green>96</green>
         <blue>128</blue>
        </color>
       </brush>
@@ -153,9 +153,9 @@
      <colorrole role="WindowText">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
-        <red>0</red>
-        <green>0</green>
-        <blue>0</blue>
+        <red>255</red>
+        <green>248</green>
+        <blue>245</blue>
        </color>
       </brush>
      </colorrole>
@@ -243,8 +243,8 @@
      <colorrole role="Window">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
-        <red>0</red>
-        <green>53</green>
+        <red>215</red>
+        <green>96</green>
         <blue>128</blue>
        </color>
       </brush>
@@ -371,8 +371,8 @@
      <colorrole role="Base">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
-        <red>0</red>
-        <green>53</green>
+        <red>215</red>
+        <green>96</green>
         <blue>128</blue>
        </color>
       </brush>
@@ -380,8 +380,8 @@
      <colorrole role="Window">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
-        <red>0</red>
-        <green>53</green>
+        <red>215</red>
+        <green>96</green>
         <blue>128</blue>
        </color>
       </brush>
@@ -492,6 +492,38 @@
     </property>
     <property name="text">
      <string>Run Sim</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="spinBox">
+    <property name="geometry">
+     <rect>
+      <x>570</x>
+      <y>540</y>
+      <width>48</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="maximum">
+     <number>10000</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>550</x>
+      <y>520</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>numFrames</string>
     </property>
    </widget>
   </widget>
