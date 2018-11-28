@@ -70,30 +70,33 @@ void Grid::setForces(glm::vec3 pos, glm::vec3 val) {
 }
 
 void Grid::clear() {
-    int numParticles = gridVelocities.rows();
-    gridVelocities = Eigen::MatrixXd::Zero(numParticles, 3);
-    gridMasses = Eigen::MatrixXd::Zero(numParticles, 1);
-    gridVelocities = Eigen::MatrixXd::Zero(numParticles, 3);
-    gridMomentum = Eigen::MatrixXd::Zero(numParticles, 3);
-    //kernelWeights.clear();
+    int matLength = dim[0] * dim[1] * dim[2];
+    gridVelocities = Eigen::MatrixXd::Zero(matLength, 3);
+    gridPositions = Eigen::MatrixXd::Zero(matLength, 3);
+    gridMasses = Eigen::MatrixXd::Zero(matLength, 1);
+    gridMomentum = Eigen::MatrixXd::Zero(matLength, 3);
+    gridForces = Eigen::MatrixXd::Zero(matLength, 3);
 }
 
 void Grid::applyForces(float dt) {
 
-    float gravity = 4;
+    float gravity = 10;
 
     // use new forces to update velocity
-//    for(int i = 0; i < gridVelocities.rows(); i++) {
-//        if(gridMasses(i, 0) > 0) {
-//            gridVelocities(i, 0) = gridVelocities(i, 0) + (dt * gridForces(i, 0)) / gridMasses(i, 0);
-//            gridVelocities(i, 1) = gridVelocities(i, 1) + (dt * gridForces(i, 1)) / gridMasses(i, 0);
-//            gridVelocities(i, 2) = gridVelocities(i, 2) + (dt * gridForces(i, 2)) / gridMasses(i, 0);
-//        }
-//    }
-    // apply gravity force
     for(int i = 0; i < gridVelocities.rows(); i++) {
         if(gridMasses(i, 0) > 0) {
-            gridVelocities(i, 1) = gridVelocities(i, 1) - (dt * gravity);
+
+            gridForces(i, 1) = gridForces(i, 1) - gravity * gridMasses(i, 0);
+
+            gridVelocities(i, 0) = gridVelocities(i, 0) + (dt * gridForces(i, 0)) / gridMasses(i, 0);
+            gridVelocities(i, 1) = gridVelocities(i, 1) + (dt * gridForces(i, 1)) / gridMasses(i, 0);
+            gridVelocities(i, 2) = gridVelocities(i, 2) + (dt * gridForces(i, 2)) / gridMasses(i, 0);
         }
     }
+    // apply gravity force
+//    for(int i = 0; i < gridVelocities.rows(); i++) {
+//        if(gridMasses(i, 0) > 0) {
+//            gridVelocities(i, 1) = gridVelocities(i, 1) - (dt * gravity);
+//        }
+//    }
 }

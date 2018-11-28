@@ -43,8 +43,8 @@ private:
     // constants that determine the consistency of the snow
     float hardeningCo = 10;
     float poissonsRatio = 0.3;
-    float youngsMod = 1.0 * pow(10.0, 4.0);
-    float density = 4.0 * pow(10, 2.0); // initial density in kg / m^3
+    float youngsMod = 50.0;//pow(10.0, 4.0);
+    float density = 2.0;//4.0 * pow(10, 2.0); // initial density in kg / m^3
 
     float thetaC = 2.5 * pow(10.0, -2.0);
     float thetaS = 7.5 * pow(10.0, -3.0);

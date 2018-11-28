@@ -194,7 +194,7 @@ void MyGL::generateNewParticleSet() {
     // sample from new mesh
     poissonSampler->SampleMesh(filename);
 
-    simulation = new Simulation(new Particles(this, poissonSampler->validSamples.size()), numFrames);
+    simulation = new Simulation(new Particles(this, poissonSampler->validSamples.size()), numSeconds, frameRate);
 
     // transfer positions to particles
     for(int i = 0; i < poissonSampler->validSamples.size(); i++) {
@@ -255,7 +255,7 @@ void MyGL::loadSet() {
 //    positions.push_back(glm::vec3(0, 0, 0));
 //    positions.push_back(glm::vec3(-.2, 0, .1));
 //    positions.push_back(glm::vec3(.3, 0, -.1));
-    simulation = new Simulation(new Particles(this, positions.size()), numFrames);
+    simulation = new Simulation(new Particles(this, positions.size()), numSeconds, frameRate);
 
     for(int i = 0; i < simulation->particles->positions.rows(); i++) {
         simulation->particles->positions(i, 0) = positions[i][0];
@@ -287,10 +287,19 @@ void MyGL::timerUpdate()
 // set dt of sim?
     update();
 }
-int MyGL::getNumFrames() {
-    return numFrames;
+
+int MyGL::getNumSeconds() {
+    return numSeconds;
 }
 
-void MyGL::updateFrameNum(int n) {
-    numFrames = n;
+int MyGL::getFrameRate() {
+    return frameRate;
+}
+
+void MyGL::updateNumSeconds(int n) {
+    numSeconds = n;
+}
+
+void MyGL::updateFrameRate(int n) {
+    frameRate = n;
 }

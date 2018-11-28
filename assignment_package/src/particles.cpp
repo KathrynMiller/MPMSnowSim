@@ -22,10 +22,10 @@ positions(Eigen::MatrixXd(numParticles, 3)){
 
        // velocities(i, 1) = -1.0;
 
-        masses(i) = 1.0 / numParticles;
+        volumes(i) = 1.0 / numParticles;
         mus(i) = mu;
         lambdas(i) = lambda;
-        volumes(i) =  1.0 / numParticles; // masses(i) / density;
+        masses(i) = volumes(i) * density;
     }
 
 }

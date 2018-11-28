@@ -7,7 +7,7 @@ class Simulation
 {
 
 public:
-    Simulation(Particles *p, int numFrames);
+    Simulation(Particles *p, int numSeconds, int frameRate);
     ~Simulation();
 
     // the set of particles over which to run the sim
@@ -17,9 +17,13 @@ public:
     Grid* grid;
 
     int numParticles;
+    int stepsPerFrame;
+    float dt = 1e-4;
 
     int frameNumber = 0;
     int numOutputFrames; // default number of frames to simulate
+    // used to modify dt
+    float maxParticleVelocity = -INFINITY;
 
     bool isRunning = false;
 

@@ -20,13 +20,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->mygl->setFocus();
 
-    ui->spinBox->setValue(ui->mygl->getNumFrames());
+    ui->frameRate->setValue(ui->mygl->getFrameRate());
+    ui->numSeconds->setValue(ui->mygl->getNumSeconds());
 
     connect(ui->NewParticleSet, SIGNAL(clicked(bool)), ui->mygl, SLOT(generateNewParticleSet()));
     connect(ui->SaveSet, SIGNAL(clicked(bool)), ui->mygl, SLOT(saveSet()));
     connect(ui->LoadSet, SIGNAL(clicked(bool)), ui->mygl, SLOT(loadSet()));
     connect(ui->runSim, SIGNAL(clicked(bool)), ui->mygl, SLOT(runSim()));
-    connect(ui->spinBox, SIGNAL(valueChanged(int)), ui->mygl, SLOT(updateFrameNum(int)));
+    connect(ui->frameRate, SIGNAL(valueChanged(int)), ui->mygl, SLOT(updateFrameRate(int)));
+    connect(ui->numSeconds, SIGNAL(valueChanged(int)), ui->mygl, SLOT(updateNumSeconds(int)));
 }
 
 MainWindow::~MainWindow()
