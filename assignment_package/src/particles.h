@@ -1,5 +1,4 @@
 #pragma once
-#include <Partio.h>
 #include <eigen-git-mirror/Eigen/Core>
 #include <drawable.h>
 #include <QOpenGLContext>

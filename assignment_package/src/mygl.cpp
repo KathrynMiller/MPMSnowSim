@@ -21,7 +21,8 @@ MyGL::MyGL(QWidget *parent)
       m_geomCylinder(this), m_geomSphere(this),
       m_progLambert(this), m_progFlat(this),
       m_glCamera(), simulation(new Simulation(numSeconds, frameRate)),
-      time(QDateTime::currentMSecsSinceEpoch()), poissonSampler(new PoissonSampler()), running(false)
+      time(QDateTime::currentMSecsSinceEpoch()), poissonSampler(new PoissonSampler()), running(false),
+      gridBoundary(nullptr)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -116,6 +117,7 @@ void MyGL::paintGL()
     if(simulation != nullptr && simulation->particles != nullptr) {
         m_progLambert.setModelMatrix(model);
         m_progLambert.draw(*(simulation->particles));
+        m_progLambert.draw(*gridBoundary);
     }
 
 
@@ -196,14 +198,27 @@ void MyGL::generateNewParticleSet() {
 
     //simulation = new Simulation(new Particles(this, poissonSampler->validSamples.size()), numSeconds, frameRate);
     Particles* p = new Particles(this, poissonSampler->validSamples.size());
+    glm::vec3 minCorner = glm::vec3(INFINITY);
+    glm::vec3 maxCorner = glm::vec3(-INFINITY);
     // transfer positions to particles
     for(int i = 0; i < poissonSampler->validSamples.size(); i++) {
         p->positions(i, 0) = poissonSampler->validSamples[i]->pos[0];
         p->positions(i, 1) = poissonSampler->validSamples[i]->pos[1];
         p->positions(i, 2) = poissonSampler->validSamples[i]->pos[2];
+
+        minCorner[0] = std::min(poissonSampler->validSamples[i]->pos[0], minCorner[0]);
+        minCorner[1] = std::min(poissonSampler->validSamples[i]->pos[1], minCorner[1]);
+        minCorner[2] = std::min(poissonSampler->validSamples[i]->pos[2], minCorner[2]);
+
+        maxCorner[0] = std::max(poissonSampler->validSamples[i]->pos[0], maxCorner[0]);
+        maxCorner[1] = std::max(poissonSampler->validSamples[i]->pos[1], maxCorner[1]);
+        maxCorner[2] = std::max(poissonSampler->validSamples[i]->pos[2], maxCorner[2]);
     }
     simulation->setParticles(p);
     simulation->particles->create();
+    gridBoundary = new GridBoundary(this, simulation->cellSize, minCorner, maxCorner);
+    gridBoundary->create();
+
 }
 
 void MyGL::saveSet() {
@@ -254,13 +269,25 @@ void MyGL::loadSet() {
 
     //simulation = new Simulation(new Particles(this, positions.size()), numSeconds, frameRate);
     Particles* p = new Particles(this, positions.size());
+    glm::vec3 minCorner = glm::vec3(INFINITY);
+    glm::vec3 maxCorner = glm::vec3(-INFINITY);
     for(int i = 0; i < p->positions.rows(); i++) {
         p->positions(i, 0) = positions[i][0];
         p->positions(i, 1) = positions[i][1];
         p->positions(i, 2) = positions[i][2];
+
+        minCorner[0] = std::min(positions[i][0], minCorner[0]);
+        minCorner[1] = std::min(positions[i][1], minCorner[1]);
+        minCorner[2] = std::min(positions[i][2], minCorner[2]);
+
+        maxCorner[0] = std::max(positions[i][0], maxCorner[0]);
+        maxCorner[1] = std::max(positions[i][1], maxCorner[1]);
+        maxCorner[2] = std::max(positions[i][2], maxCorner[2]);
     }
     simulation->setParticles(p);
     simulation->particles->create();
+    gridBoundary = new GridBoundary(this, simulation->cellSize, minCorner, maxCorner);
+    gridBoundary->create();
 }
 
 void MyGL::runSim() {

@@ -15,6 +15,9 @@ public:
     Particles* particles;
     // background grid for the particles
     Grid* grid;
+    float cellSize = .07;
+    glm::vec3 minCorner = glm::vec3(INFINITY);
+    glm::vec3 maxCorner = glm::vec3(-INFINITY);
 
     int numParticles;
     int stepsPerFrame;

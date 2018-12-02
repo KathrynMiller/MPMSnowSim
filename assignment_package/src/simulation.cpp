@@ -34,10 +34,6 @@ static glm::vec3 toVec3(Eigen::MatrixXd m, int r) {
 
 void Simulation::initializeGrid(float cellsize) {
 
-    // initialize origin and dimensions of the grid
-    glm::vec3 minCorner = glm::vec3(INFINITY);
-    glm::vec3 maxCorner = glm::vec3(-INFINITY);
-
     for(int i = 0; i < particles->positions.rows(); i++) {
         glm::vec3 p =  toVec3(particles->positions, i);
         minCorner[0] = std::min(p[0], minCorner[0]);
@@ -511,8 +507,6 @@ void Simulation::updateGradient() {
 void Simulation::RunSimulation(QString output_filepath, GLWidget277* mygl) {
 
     // dt <= cmax (.2 - .4) * h / vmax
-
-    float cellSize = .07;
     initializeGrid(cellSize);
 
     int i = numOutputFrames;

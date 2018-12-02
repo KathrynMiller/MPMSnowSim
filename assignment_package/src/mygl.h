@@ -10,6 +10,7 @@
 #include "particles.h"
 #include "simulation.h"
 #include "poissonsampler.h"
+#include "gridboundary.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -43,6 +44,7 @@ private:
 
     Simulation* simulation;
     PoissonSampler* poissonSampler;
+    GridBoundary* gridBoundary;
 
     QString output_filepath;
 
