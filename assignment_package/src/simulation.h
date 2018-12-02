@@ -18,7 +18,7 @@ public:
 
     int numParticles;
     int stepsPerFrame;
-    float dt = 1e-4;
+    float dt = 1e-3;
 
     int frameNumber = 0;
     int numOutputFrames; // default number of frames to simulate
@@ -57,7 +57,7 @@ public:
     void RunSimulation(QString output_filepath, GLWidget277* mygl);
 
     // helpers
-    float getWeight(int particleId, glm::vec3 node);
+    float getWeight(KernelWeights *kernelWeight, glm::vec3 particle, glm::vec3 node);
     Eigen::Vector3d getWeightGradient(KernelWeights *kernelWeight, glm::vec3 particle, glm::vec3 node);
     // returns list of neighboring node positions for iteration
     std::vector<glm::vec3> getNeighbors(glm::vec3 particle);

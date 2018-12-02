@@ -20,11 +20,11 @@ positions(Eigen::MatrixXd(numParticles, 3)){
         deformations[i]->stress = Eigen::MatrixXd::Identity(3, 3);
         deformations[i]->F = Eigen::MatrixXd::Identity(3, 3);
 
-       // velocities(i, 1) = -1.0;
-
-        volumes(i) = 1.0 / numParticles;
         mus(i) = mu;
         lambdas(i) = lambda;
+// density = 1, mass = 10, volume = mass / density
+
+        volumes(i) = 1.0 / numParticles;
         masses(i) = volumes(i) * density;
     }
 

@@ -8,7 +8,7 @@ class Grid
 public:
     Grid(glm::vec3 o, glm::vec3 d, float cellsize);
     // cellsize
-    float cellsize = .2;
+    float cellsize = .1;
     // dimension of grid in 3d space
     glm::vec3 dim;
     // lower left corner of the grid
@@ -32,6 +32,7 @@ public:
     void setForces(glm::vec3 pos, glm::vec3 val);
 
     void applyForces(float dt);
+    void handleCollisions();
 
     void clear();
 

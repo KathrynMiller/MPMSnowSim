@@ -8,8 +8,8 @@
 #include <la.h>
 
 struct KernelWeights {
-    Eigen::MatrixXd N;
-    Eigen::MatrixXd N_deriv;
+    Eigen::Matrix3d N;
+    Eigen::Matrix3d N_deriv;
 };
 
 struct Deformation {
@@ -43,8 +43,8 @@ private:
     // constants that determine the consistency of the snow
     float hardeningCo = 10;
     float poissonsRatio = 0.3;
-    float youngsMod = 50.0;//pow(10.0, 4.0);
-    float density = 2.0;//4.0 * pow(10, 2.0); // initial density in kg / m^3
+    float youngsMod = 1.4 * pow(10, 3.0);//50.0;
+    float density = 4.0 * pow(10, 2.0); // initial density in kg / m^3
 
     float thetaC = 2.5 * pow(10.0, -2.0);
     float thetaS = 7.5 * pow(10.0, -3.0);

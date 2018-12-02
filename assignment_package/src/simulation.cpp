@@ -11,9 +11,11 @@
 
 Simulation::Simulation(Particles* p, int numSeconds, int frameRate): particles(p), grid(nullptr)
 {
-    stepsPerFrame = ceil(1.0 / (dt / (1.0 / frameRate))) * numSeconds;
+    stepsPerFrame = ceil(1.0 / (dt / (1.0 / frameRate)));
+    //numOutputFrames = numSeconds;
     numOutputFrames = frameRate * numSeconds;
     numParticles = p->numParticles;
+    std::cout << "NUMBER OF FINAL FRAMES: " + numOutputFrames;
 }
 
 Simulation::~Simulation() {
@@ -46,7 +48,9 @@ void Simulation::initializeGrid(float cellsize) {
     minCorner = minCorner - glm::vec3(cellsize * 2.0);
     maxCorner = maxCorner + glm::vec3(cellsize  * 2.0);
 
-    //minCorner -= glm::vec3(cellsize * 15.0);
+    // make bigger to see more movement
+    minCorner -= glm::vec3(cellsize * 7.0);
+    maxCorner += glm::vec3(cellsize * 7.0);
     // set grid origin and dimensions
     glm::vec3 origin = minCorner;
     glm::vec3 dim = (maxCorner - minCorner) / cellsize; // in cellsize units
@@ -120,11 +124,9 @@ Eigen::Vector3d Simulation::getWeightGradient(KernelWeights* kernelWeight, glm::
     return weightGrad / grid->cellsize;
 }
 
-float Simulation::getWeight(int particleId, glm::vec3 node) {
-    glm::vec3 particle = toVec3(particles->positions, particleId);
+float Simulation::getWeight(KernelWeights *kernelWeight, glm::vec3 particle, glm::vec3 node) {
     glm::vec3 baseNode = getBaseNode(particle);
     glm::vec3 offset = node - baseNode;
-    KernelWeights* kernelWeight = particles->kernelWeights[particleId];
 
     float weight = kernelWeight->N(0, int(offset[0])) * kernelWeight->N(1, int(offset[1])) * kernelWeight->N(2, int(offset[2]));
     return weight;
@@ -143,8 +145,69 @@ std::vector<glm::vec3> Simulation::getNeighbors(glm::vec3 particle) {
     }
     return neighbors;
 }
+/*
+static Eigen::Vector3f calcWeights(float index_space, int& baseNode)
+{
+    baseNode = std::floor(index_space-0.5);
+
+    Eigen::Vector3f output;
+
+    float d0 = index_space - (float)baseNode; // 0.5<d0<1.5
+    float z = 1.5f - d0;
+    output[0] = 0.5 * z * z;
+
+    float d1 = d0 - 1;          // -0.5<d1<0.5
+    output[1] = 0.75 - d1 * d1;
+
+    float d2 = 1 - d1;          // 0.5<d2<1.5
+    float zz = 1.5f - d2;
+    output[2] = 0.5 * zz * zz;
+
+    return output;
+}
+static Eigen::Vector3f calcGradWeights(float index_space, int baseNode)
+{
+    Eigen::Vector3f graInt;
+
+    float d0 = index_space - (float)baseNode;
+    float z = 1.5f - d0;
+
+    float d1 = d0 - 1;
+
+    float d2 = 1 - d1;
+    float zz = 1.5f - d2;
+
+    graInt[0] = -z;
+    graInt[1] = -2*d1;
+    graInt[2] = zz;
+
+    return graInt;
+}
+static void QuadraticInterpolation(Eigen::Vector3f particlePos, Eigen::Vector3i& baseNode, Eigen::Matrix3d& wp, Eigen::Matrix3d& dwp)
+{
+
+    Eigen::Vector3f interX = calcWeights(particlePos[0], baseNode[0]);
+    Eigen::Vector3f interY = calcWeights(particlePos[1], baseNode[1]);
+    Eigen::Vector3f interZ = calcWeights(particlePos[2], baseNode[2]);
+
+    // calculate weight matrix
+    wp(0,0)= interX[0]; wp(0,1) = interX[1]; wp(0,2)=interX[2];
+    wp(1,0)= interY[0]; wp(1,1) = interY[1]; wp(1,2)=interY[2];
+    wp(2,0)= interZ[0]; wp(2,1) = interZ[1]; wp(2,2)=interZ[2];
+
+    Eigen::Vector3f graIntX = calcGradWeights(particlePos[0], baseNode[0]);
+    Eigen::Vector3f graIntY = calcGradWeights(particlePos[1], baseNode[1]);
+    Eigen::Vector3f graIntZ = calcGradWeights(particlePos[2], baseNode[2]);
+
+    // calculate gradient weight matrix
+    dwp(0,0)= graIntX[0]; dwp(0,1) = graIntX[1]; dwp(0,2)=graIntX[2];
+    dwp(1,0)= graIntY[0]; dwp(1,1) = graIntY[1]; dwp(1,2)=graIntY[2];
+    dwp(2,0)= graIntZ[0]; dwp(2,1) = graIntZ[1]; dwp(2,2)=graIntZ[2];
+}
+*/
 
 void Simulation::fillKernelWeights() {
+
     // for each particle
     for(int p = 0; p < particles->positions.rows(); p++) {
         glm::vec3 particle = toVec3(particles->positions, p); // world space pos
@@ -171,7 +234,7 @@ void Simulation::fillKernelWeights() {
         Eigen::Vector3d gradWSum = Eigen::Vector3d::Zero();
         std::vector<glm::vec3> neighbors = getNeighbors(particle);
         for(glm::vec3 n: neighbors) {
-            wSum += getWeight(p, n);
+            wSum += getWeight(particles->kernelWeights[p], particle, n);
             gradWSum += getWeightGradient(kernelWeight, particle, n);
         }
         // test that weights are valid
@@ -194,7 +257,7 @@ void Simulation::P2G() {
         // and add its contribution to that grid node's weight sum for velocity and momentum
         for(int i = 0; i < neighborNodes.size(); i++) {
             glm::vec3 currNode = neighborNodes[i];
-            float weight = getWeight(p, currNode);
+            float weight = getWeight(particles->kernelWeights[p], particle, currNode);
 
             // extract particle mass and velocity from eigen matrix
             float pMass = particles->masses(p);
@@ -234,14 +297,6 @@ void Simulation::computeStress() {
     for(int i = 0; i < numParticles; i++) {
         // compute the svd of F
         Eigen::Matrix3d F = (particles->deformations[i]->F);
-
-        // testing stretch
-        //        if(frameNumber == 1) {
-        //            F << 2.0, 0.0, 0.0,
-        //                    0.0, 1.0, 0.0,
-        //                    0.0, 0.0, 1.0;
-        //            particles->deformations[i]->F = F;
-        //        }
 
         double J = F.determinant();
         Eigen::JacobiSVD<Eigen::Matrix3d> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -308,8 +363,13 @@ void Simulation::computeStress() {
         Eigen::Matrix3d jFInvTranspose = ComputeJFInvTranspose(F);
         // use it to calculate the stress and put this in the particle's stress matrix
         // TODO incorporate plastic part
-        Eigen::Matrix3d newStress = (2.0 * particles->mus(i, 0) * (F - R)) + (particles->lambdas(i, 0) * (J - 1) * J * F.inverse().transpose());
+        Eigen::Matrix3d newStress = (2.0 * particles->mus(i, 0) * (F - R)) + (particles->lambdas(i, 0) * (J - 1) * J * jFInvTranspose);
         particles->deformations[i]->stress = newStress;
+
+        //        if(newStress != Eigen::Matrix3d::Zero(3, 3)) {
+        //            std::cout << "FRAME: " << frameNumber << "\n";
+        //            std::cout << "STRESS: " << newStress << "\n";
+        //        }
     }
 
 }
@@ -327,7 +387,7 @@ void Simulation::computeForces() {
         // for each particle, calculate the nodes it affects and use its deformation to add to its grid node force
         for(int i = 0; i < neighborNodes.size(); i++) {
 
-            glm:: vec3 currNode = neighborNodes[i];
+            glm::vec3 currNode = neighborNodes[i];
             Eigen::Vector3d weightGrad = getWeightGradient(particles->kernelWeights[p], particle, currNode);
 
             glm::vec3 gridForce =  grid->getForces(currNode);
@@ -337,6 +397,7 @@ void Simulation::computeForces() {
             gridForce[1] -= sumTerm(1);
             gridForce[2] -= sumTerm(2);
             grid->setForces(currNode, gridForce);
+            // std::cout << "GRID FORCE: (" << gridForce[0] << ", " << gridForce[1] << ", " << gridForce[2]  << ") \n \n";
         } // end for neighbor nodes
 
     } // end for each particle
@@ -354,7 +415,7 @@ void Simulation::G2P() {
             glm::vec3 currNode = neighborNodes[i];
 
             // weight for this node based on particle kernel
-            float weight = getWeight(p, currNode);
+            float weight = getWeight(particles->kernelWeights[p], particle, currNode);
 
             glm::vec3 gridVelocity = grid->getVelocity(currNode);
             glm::vec3 newVel = glm::vec3(particles->velocities(p, 0) + weight * gridVelocity[0],
@@ -365,9 +426,9 @@ void Simulation::G2P() {
             particles->velocities(p, 2) = newVel[2];
 
             // std::max not working?
-            if(maxParticleVelocity < newVel.length()) {
-                maxParticleVelocity = newVel.length();
-            }
+            //            if(maxParticleVelocity < newVel.length()) {
+            //                maxParticleVelocity = newVel.length();
+            //            }
         }
 
     }
@@ -383,49 +444,19 @@ void Simulation::updateParticlePositions(float dt) {
         particles->positions(p, 1) = newPos[1];
         particles->positions(p, 2) = newPos[2];
 
-        float epsilon = 1e-5;
+        /*
         // need to clamp positions to box
         glm::vec3 origMin = grid->origin + glm::vec3(2.0 * grid->cellsize);
-        if(particles->positions(p, 0) < origMin[0]) {
-            particles->positions(p, 0) = origMin[0] + epsilon;
-            particles->velocities(p, 0) = 0.0;
-            particles->velocities(p, 1) = 0.0;
-            particles->velocities(p, 2) = 0.0;
-        }
-        if(particles->positions(p, 1) < origMin[1]) {
-            particles->positions(p, 1) = origMin[1] + epsilon;
-            particles->velocities(p, 0) = 0.0;
-            particles->velocities(p, 1) = 0.0;
-            particles->velocities(p, 2) = 0.0;
-        }
-        if(particles->positions(p, 2) < origMin[2]) {
-            particles->positions(p, 2) = origMin[2] + epsilon;
-            particles->velocities(p, 0) = 0.0;
-            particles->velocities(p, 1) = 0.0;
-            particles->velocities(p, 2) = 0.0;
-        }
-
         glm::vec3 origMax = grid->origin + (grid->dim * grid->cellsize) - glm::vec3(2.0 * grid->cellsize);
-        if(particles->positions(p, 0) > origMax[0]) {
-            particles->positions(p, 0) = origMax[0] - epsilon;
-            particles->velocities(p, 0) = 0.0;
-            particles->velocities(p, 1) = 0.0;
-            particles->velocities(p, 2) = 0.0;
+        for(int i = 0; i < 3; i++) {
+            if(particles->positions(p, i) < origMin[i]) {
+                particles->positions(p, i) = origMin[i];
+            }
+            if(particles->positions(p, i) > origMax[i]) {
+                particles->positions(p, i) = origMax[i];
+            }
         }
-        if(particles->positions(p, 1) > origMax[1]) {
-            particles->positions(p, 1) = origMax[1] - epsilon;
-            particles->velocities(p, 0) = 0.0;
-            particles->velocities(p, 1) = 0.0;
-            particles->velocities(p, 2) = 0.0;
-        }
-        if(particles->positions(p, 2) > origMax[2]) {
-            particles->positions(p, 2) = origMax[2] - epsilon;
-            particles->velocities(p, 0) = 0.0;
-            particles->velocities(p, 1) = 0.0;
-            particles->velocities(p, 2) = 0.0;
-        }
-
-
+*/
     }
 }
 
@@ -435,7 +466,7 @@ void Simulation::updateGradient(float dt) {
 
         glm::vec3 particle = toVec3(particles->positions, p);
         std::vector<glm::vec3> neighborNodes = getNeighbors(particle);
-        Eigen::Matrix3d grad_vp = Eigen::Matrix3d::Zero(3, 3);
+        Eigen::Matrix3d gradVp = Eigen::Matrix3d::Zero(3, 3);
 
         for(int i = 0; i < neighborNodes.size(); i++) {
             glm::vec3 currNode = neighborNodes[i];
@@ -454,64 +485,50 @@ void Simulation::updateGradient(float dt) {
             test(2,1) = gridVel[2] * dwip(1);
             test(2,2) = gridVel[2] * dwip(2);
 
-            grad_vp += test;
+            gradVp += test;
         }
-
-        Eigen::Matrix3d res = dt * grad_vp;
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (res(i, j) < 1e-7) res(i, j) = 0;
-            }
-        }
-
-        Eigen::Matrix3d newF = res * particles->deformations[p]->F;
-        particles->deformations[p]->F += newF;
+        Eigen::Matrix3d newF = dt * gradVp * particles->deformations[p]->F;
+        particles->deformations[p]->F = particles->deformations[p]->F + newF;
     }
 }
 
 void Simulation::RunSimulation(QString output_filepath, GLWidget277* mygl) {
 
-    float dt = pow(10.0, -4);
-    dt = .01;
-
     // dt <= cmax (.2 - .4) * h / vmax
 
-    float cellSize = .07;
-    // make new grid
+    float cellSize = .12;
     initializeGrid(cellSize);
 
     int i = numOutputFrames;
 
     while(i > 0) {
         // iterate step steps per frame
-        //        int step = stepsPerFrame;
-        //        while(step > 0) {
-        grid->clear();
+        int step = stepsPerFrame;
+        while(step > 0) {
+            grid->clear();
 
-        if(frameNumber == 19) {
-            int x = 0;
+            fillKernelWeights();
+            // transfer attributes to the grid
+            P2G();
+            // compute Piola Kirchoff stress per particle
+            computeStress();
+            // compute forces on grid using stress
+            computeForces();
+            // apply forces to grid velocity
+            grid->applyForces(dt);
+            grid->handleCollisions();
+            // transfer attributes back to particles
+            G2P();
+            // update F
+            updateGradient(dt);
+            //update particle positions
+            updateParticlePositions(dt);
+
+
+            step--;
         }
-        fillKernelWeights();
-        // transfer attributes to the grid
-        P2G();
-
-     //   computeStress();
-        // compute forces on grid
-      //  computeForces();
-        // apply forces to grid velocity
-        grid->applyForces(dt);
-        // transfer attributes back to particles
-        G2P();
-
-        //update particle positions
-        updateParticlePositions(dt);
-        // update F
-     //   updateGradient(dt);
-
-        frameNumber++;
-        //            step--;
-        //        }
         saveToBgeo(output_filepath);
+        frameNumber++;
         i--;
     }
 }
