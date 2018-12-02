@@ -35,6 +35,8 @@ public:
 
     // compute P, or hyperelasticity model that fills particle stresses
     void computeStress();
+    // integrates plastic component of deformation gradient
+    void computeSnowStress();
     // compute forces
     void computeForces();
     void updateGradient(float dt);

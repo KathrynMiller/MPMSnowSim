@@ -145,66 +145,7 @@ std::vector<glm::vec3> Simulation::getNeighbors(glm::vec3 particle) {
     }
     return neighbors;
 }
-/*
-static Eigen::Vector3f calcWeights(float index_space, int& baseNode)
-{
-    baseNode = std::floor(index_space-0.5);
 
-    Eigen::Vector3f output;
-
-    float d0 = index_space - (float)baseNode; // 0.5<d0<1.5
-    float z = 1.5f - d0;
-    output[0] = 0.5 * z * z;
-
-    float d1 = d0 - 1;          // -0.5<d1<0.5
-    output[1] = 0.75 - d1 * d1;
-
-    float d2 = 1 - d1;          // 0.5<d2<1.5
-    float zz = 1.5f - d2;
-    output[2] = 0.5 * zz * zz;
-
-    return output;
-}
-static Eigen::Vector3f calcGradWeights(float index_space, int baseNode)
-{
-    Eigen::Vector3f graInt;
-
-    float d0 = index_space - (float)baseNode;
-    float z = 1.5f - d0;
-
-    float d1 = d0 - 1;
-
-    float d2 = 1 - d1;
-    float zz = 1.5f - d2;
-
-    graInt[0] = -z;
-    graInt[1] = -2*d1;
-    graInt[2] = zz;
-
-    return graInt;
-}
-static void QuadraticInterpolation(Eigen::Vector3f particlePos, Eigen::Vector3i& baseNode, Eigen::Matrix3d& wp, Eigen::Matrix3d& dwp)
-{
-
-    Eigen::Vector3f interX = calcWeights(particlePos[0], baseNode[0]);
-    Eigen::Vector3f interY = calcWeights(particlePos[1], baseNode[1]);
-    Eigen::Vector3f interZ = calcWeights(particlePos[2], baseNode[2]);
-
-    // calculate weight matrix
-    wp(0,0)= interX[0]; wp(0,1) = interX[1]; wp(0,2)=interX[2];
-    wp(1,0)= interY[0]; wp(1,1) = interY[1]; wp(1,2)=interY[2];
-    wp(2,0)= interZ[0]; wp(2,1) = interZ[1]; wp(2,2)=interZ[2];
-
-    Eigen::Vector3f graIntX = calcGradWeights(particlePos[0], baseNode[0]);
-    Eigen::Vector3f graIntY = calcGradWeights(particlePos[1], baseNode[1]);
-    Eigen::Vector3f graIntZ = calcGradWeights(particlePos[2], baseNode[2]);
-
-    // calculate gradient weight matrix
-    dwp(0,0)= graIntX[0]; dwp(0,1) = graIntX[1]; dwp(0,2)=graIntX[2];
-    dwp(1,0)= graIntY[0]; dwp(1,1) = graIntY[1]; dwp(1,2)=graIntY[2];
-    dwp(2,0)= graIntZ[0]; dwp(2,1) = graIntZ[1]; dwp(2,2)=graIntZ[2];
-}
-*/
 
 void Simulation::fillKernelWeights() {
 
@@ -294,6 +235,12 @@ static Eigen::Matrix3d ComputeJFInvTranspose(const Eigen::Matrix3d &F) {
 }
 
 void Simulation::computeStress() {
+    double E = 50;
+    double nu = 0.3;
+
+    double lambda = E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu));
+    double mu = E / (2.0 * (1.0 + nu));
+
     for(int i = 0; i < numParticles; i++) {
         // compute the svd of F
         Eigen::Matrix3d F = (particles->deformations[i]->F);
@@ -304,18 +251,18 @@ void Simulation::computeStress() {
         Eigen::Vector3d Sigma = svd.singularValues(); // 3x1 vector representing diagonal values of sigma
         Eigen::Matrix3d V = svd.matrixV();
 
-        Eigen::Matrix3f tempSigma = Eigen::Matrix3f::Zero();
-        tempSigma(0,0) = Sigma(0);
-        tempSigma(1,1) = Sigma(1);
-        tempSigma(2,2) = Sigma(2);
+        Eigen::Matrix3f matSigma = Eigen::Matrix3f::Zero();
+        matSigma(0,0) = Sigma(0);
+        matSigma(1,1) = Sigma(1);
+        matSigma(2,2) = Sigma(2);
 
-        //sorting
+        // sorting
         if(U.determinant() < 0)
         {
             U(0,2) *= -1;
             U(1,2) *= -1;
             U(2,2) *= -1;
-            tempSigma(2,2) *= -1;
+            matSigma(2,2) *= -1;
         }
 
         if(V.determinant() < 0)
@@ -323,55 +270,85 @@ void Simulation::computeStress() {
             V(0,2) *= -1;
             V(1,2) *= -1;
             V(2,2) *= -1;
-            tempSigma(2,2) *= -1;
+            matSigma(2,2) *= -1;
         }
 
-        if(tempSigma(0,0) < tempSigma(1,1))
+        if(matSigma(0,0) < matSigma(1,1))
         {
-            float tempRecord = tempSigma(0,0);
-            tempSigma(0,0) = tempSigma(1,1);
-            tempSigma(1,1) = tempRecord;
+            float tempRecord = matSigma(0,0);
+            matSigma(0,0) = matSigma(1,1);
+            matSigma(1,1) = tempRecord;
         }
 
-        /*
-        Eigen::RowVector3d temp = Eigen::RowVector3d::Zero(1, 3);
-
-        for (unsigned int i = 1; i < Sigma.size(); ++i) {
-            for (unsigned int j = i; j > 0 && Sigma(j - 1, 0) < Sigma(j, 0); j--) {
-                std::swap(Sigma(j, 0), Sigma(j - 1, 0));
-
-                temp = U.row(j);
-                U.row(j) = U.row(j - 1);
-                U.row(j - 1) = temp;
-
-                temp = V.row(j);
-                V.row(j) = V.row(j - 1);
-                V.row(j - 1) = temp;
-            }
-        }
-
-        if (U.determinant() < 0) {
-            U.col(2) *= -1;
-            Sigma(2, 0) *= -1;
-        }
-        if (V.determinant() < 0) {
-            V.col(2) *= -1;
-            Sigma(2, 0) *= -1;
-        }
-*/
         Eigen::Matrix3d R = U * V.transpose();
-        Eigen::Matrix3d jFInvTranspose = ComputeJFInvTranspose(F);
+        Eigen::Matrix3d FInvTranspose = ComputeJFInvTranspose(F);
         // use it to calculate the stress and put this in the particle's stress matrix
         // TODO incorporate plastic part
-        Eigen::Matrix3d newStress = (2.0 * particles->mus(i, 0) * (F - R)) + (particles->lambdas(i, 0) * (J - 1) * J * jFInvTranspose);
+        Eigen::Matrix3d newStress = (2.0 * mu * (F - R)) + (lambda * (J - 1) * J * FInvTranspose);
         particles->deformations[i]->stress = newStress;
-
-        //        if(newStress != Eigen::Matrix3d::Zero(3, 3)) {
-        //            std::cout << "FRAME: " << frameNumber << "\n";
-        //            std::cout << "STRESS: " << newStress << "\n";
-        //        }
     }
+}
 
+void Simulation::computeSnowStress() {
+    double E = 50;
+    double nu = 0.2;
+
+    double lambda = E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu));
+    double mu = E / (2.0 * (1.0 + nu));
+
+    double hardCo = 10.0;
+
+    for(int i = 0; i < numParticles; i++) {
+
+        float Jp = particles->deformations[i]->Fp.determinant();
+        float Je = particles->deformations[i]->Fe.determinant();
+
+        float muFp = mu * exp(10*(1-Jp));
+        float lambdaFp = lambda * exp(10 * (1-Jp));
+
+        // compute the svd of Fe
+        Eigen::Matrix3d Fe = (particles->deformations[i]->Fe);
+        Eigen::Matrix3d FeInvTranspose = ComputeJFInvTranspose(Fe);;
+
+        Eigen::JacobiSVD<Eigen::Matrix3d> svd(Fe, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        Eigen::Matrix3d Ue = svd.matrixU();
+        Eigen::Vector3d Sigmae = svd.singularValues(); // 3x1 vector representing diagonal values of sigma
+        Eigen::Matrix3d Ve = svd.matrixV();
+
+        Eigen::Matrix3d matSigmae = Eigen::Matrix3d::Zero();
+        matSigmae(0,0) = Sigmae(0);
+        matSigmae(1,1) = Sigmae(1);
+        matSigmae(2,2) = Sigmae(2);
+
+        // sorting
+        if(Ue.determinant() < 0)
+        {
+            Ue(0,2) *= -1;
+            Ue(1,2) *= -1;
+            Ue(2,2) *= -1;
+            matSigmae(2,2) *= -1;
+        }
+
+        if(Ve.determinant() < 0)
+        {
+            Ve(0,2) *= -1;
+            Ve(1,2) *= -1;
+            Ve(2,2) *= -1;
+            matSigmae(2,2) *= -1;
+        }
+
+        if(matSigmae(0,0) < matSigmae(1,1))
+        {
+            float tempRecord = matSigmae(0,0);
+            matSigmae(0,0) = matSigmae(1,1);
+            matSigmae(1,1) = tempRecord;
+        }
+
+        Eigen::Matrix3d Re = Ue * Ve.transpose();
+
+        Eigen::Matrix3d newStress = (2.0 * muFp * (Fe - Re)) + (lambdaFp * (Je - 1) * Je * FeInvTranspose);
+        particles->deformations[i]->stress = newStress;
+    }
 }
 
 void Simulation::computeForces() {
@@ -397,7 +374,7 @@ void Simulation::computeForces() {
             gridForce[1] -= sumTerm(1);
             gridForce[2] -= sumTerm(2);
             grid->setForces(currNode, gridForce);
-            // std::cout << "GRID FORCE: (" << gridForce[0] << ", " << gridForce[1] << ", " << gridForce[2]  << ") \n \n";
+
         } // end for neighbor nodes
 
     } // end for each particle
@@ -424,11 +401,6 @@ void Simulation::G2P() {
             particles->velocities(p, 0) = newVel[0];
             particles->velocities(p, 1) = newVel[1];
             particles->velocities(p, 2) = newVel[2];
-
-            // std::max not working?
-            //            if(maxParticleVelocity < newVel.length()) {
-            //                maxParticleVelocity = newVel.length();
-            //            }
         }
 
     }
@@ -443,20 +415,6 @@ void Simulation::updateParticlePositions(float dt) {
         particles->positions(p, 0) = newPos[0];
         particles->positions(p, 1) = newPos[1];
         particles->positions(p, 2) = newPos[2];
-
-        /*
-        // need to clamp positions to box
-        glm::vec3 origMin = grid->origin + glm::vec3(2.0 * grid->cellsize);
-        glm::vec3 origMax = grid->origin + (grid->dim * grid->cellsize) - glm::vec3(2.0 * grid->cellsize);
-        for(int i = 0; i < 3; i++) {
-            if(particles->positions(p, i) < origMin[i]) {
-                particles->positions(p, i) = origMin[i];
-            }
-            if(particles->positions(p, i) > origMax[i]) {
-                particles->positions(p, i) = origMax[i];
-            }
-        }
-*/
     }
 }
 
@@ -487,16 +445,70 @@ void Simulation::updateGradient(float dt) {
 
             gradVp += test;
         }
-        Eigen::Matrix3d newF = dt * gradVp * particles->deformations[p]->F;
-        particles->deformations[p]->F = particles->deformations[p]->F + newF;
-    }
+        Eigen::Matrix3d newF = particles->deformations[p]->F + (dt * gradVp * particles->deformations[p]->F);
+
+        bool plastic = true;
+        if(plastic) {
+            float thetaC = 2.5e-2;
+            float thetaS = 5.5e-3;
+
+            Eigen::Matrix3d newFe, newFp;
+            Eigen::Matrix3d Fe = particles->deformations[p]->Fe;
+            newFe = Fe + (dt * gradVp * Fe);
+
+
+            Eigen::JacobiSVD<Eigen::Matrix3d> svd(newF, Eigen::ComputeFullU | Eigen::ComputeFullV);
+            Eigen::Matrix3d Ue = svd.matrixU();
+            Eigen::Vector3d Sigmae = svd.singularValues(); // 3x1 vector representing diagonal values of sigma
+            Eigen::Matrix3d Ve = svd.matrixV();
+
+            Eigen::Matrix3d matSigmae = Eigen::Matrix3d::Zero();
+            matSigmae(0,0) = Sigmae(0, 0);
+            matSigmae(1,1) = Sigmae(1, 0);
+            matSigmae(2,2) = Sigmae(2, 0);
+
+            // sorting
+            if(Ue.determinant() < 0)
+            {
+                Ue(0,2) *= -1;
+                Ue(1,2) *= -1;
+                Ue(2,2) *= -1;
+                matSigmae(2,2) *= -1;
+            }
+
+            if(Ve.determinant() < 0)
+            {
+                Ve(0,2) *= -1;
+                Ve(1,2) *= -1;
+                Ve(2,2) *= -1;
+                matSigmae(2,2) *= -1;
+            }
+
+            if(matSigmae(0,0) < matSigmae(1,1))
+            {
+                float tempRecord = matSigmae(0,0);
+                matSigmae(0,0) = matSigmae(1,1);
+                matSigmae(1,1) = tempRecord;
+            }
+
+            for (int i = 0; i < 3; i++){
+                Sigmae(i,i) = std::max(1.0 - thetaC, std::min(Sigmae(i,i), 1.0 + thetaS));
+            }
+
+            // NOTE changed this to use mat Sigmae
+            particles->deformations[p]->Fe = Ue * matSigmae * Ve.transpose();
+            particles->deformations[p]->Fp = Ve * matSigmae.inverse() * Ue.transpose() * newF;
+        } // end if plastic
+        particles->deformations[p]->F = newF;
+    } // end loop over particles
+
 }
 
 void Simulation::RunSimulation(QString output_filepath, GLWidget277* mygl) {
 
     // dt <= cmax (.2 - .4) * h / vmax
 
-    float cellSize = .12;
+    float cellSize = .07;
     initializeGrid(cellSize);
 
     int i = numOutputFrames;
@@ -511,7 +523,8 @@ void Simulation::RunSimulation(QString output_filepath, GLWidget277* mygl) {
             // transfer attributes to the grid
             P2G();
             // compute Piola Kirchoff stress per particle
-            computeStress();
+            //computeStress();
+            computeSnowStress();
             // compute forces on grid using stress
             computeForces();
             // apply forces to grid velocity
