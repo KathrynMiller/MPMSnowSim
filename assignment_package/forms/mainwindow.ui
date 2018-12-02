@@ -641,7 +641,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QDoubleSpinBox" name="youngsMod"/>
+      <widget class="QDoubleSpinBox" name="youngsMod">
+       <property name="decimals">
+        <number>7</number>
+       </property>
+       <property name="singleStep">
+        <double>1.000000000000000</double>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QLabel" name="label_20">
@@ -657,7 +664,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QDoubleSpinBox" name="thetaC"/>
+      <widget class="QDoubleSpinBox" name="thetaC">
+       <property name="decimals">
+        <number>7</number>
+       </property>
+       <property name="singleStep">
+        <double>0.001000000000000</double>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QLabel" name="label_21">
@@ -673,7 +687,11 @@
       </widget>
      </item>
      <item>
-      <widget class="QDoubleSpinBox" name="thetaS"/>
+      <widget class="QDoubleSpinBox" name="thetaS">
+       <property name="decimals">
+        <number>7</number>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QLabel" name="label_22">
@@ -698,7 +716,7 @@
      <rect>
       <x>10</x>
       <y>360</y>
-      <width>168</width>
+      <width>186</width>
       <height>241</height>
      </rect>
     </property>
@@ -770,13 +788,34 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QSpinBox" name="minX"/>
+        <widget class="QSpinBox" name="minX">
+         <property name="minimum">
+          <number>-99</number>
+         </property>
+         <property name="maximum">
+          <number>0</number>
+         </property>
+        </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="minY"/>
+        <widget class="QSpinBox" name="minY">
+         <property name="minimum">
+          <number>-99</number>
+         </property>
+         <property name="maximum">
+          <number>0</number>
+         </property>
+        </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="minZ"/>
+        <widget class="QSpinBox" name="minZ">
+         <property name="minimum">
+          <number>-99</number>
+         </property>
+         <property name="maximum">
+          <number>0</number>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
