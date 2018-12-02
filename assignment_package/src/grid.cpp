@@ -212,10 +212,4 @@ void Grid::applyForces(float dt) {
             gridVelocities(i, 2) = gridVelocities(i, 2) + (dt * gridForces(i, 2)) / gridMasses(i, 0);
         }
     }
-    // apply gravity force
-    //    for(int i = 0; i < gridVelocities.rows(); i++) {
-    //        if(gridMasses(i, 0) > 0) {
-    //            gridVelocities(i, 1) = gridVelocities(i, 1) - (dt * gravity);
-    //        }
-    //    }
 }

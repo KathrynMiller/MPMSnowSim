@@ -78,6 +78,30 @@ private slots:
     // lets you change the number of output frames in gui
     void updateNumSeconds(int n);
     void updateFrameRate(int n);
+
+public slots:
+    void setYoungsMod(double n);
+    void setThetaC(double n);
+    void setThetaS(double n);
+    void setHardeningCoeff(double n);
+    void setMinX(double n);
+    void setMaxX(double n);
+    void setMinY(double n);
+    void setMaxY(double n);
+    void setMinZ(double n);
+    void setMaxZ(double n);
+    void setIsSnow(int i);
+    void setSamplerRadius(double n);
+
+    double getYoungsMod();
+    double getThetaC();
+    double getThetaS();
+    double getHardeningCoeff();
+    glm::vec3 getMinOffset();
+    glm::vec3 getMaxOffset();
+    bool getIsSnow();
+    double getSamplerRadius();
+
 };
 
 

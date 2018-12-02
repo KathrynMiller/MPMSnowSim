@@ -9,13 +9,17 @@
 #include "eigen-git-mirror/Eigen/Core"
 #include <Partio.h>
 
-Simulation::Simulation(Particles* p, int numSeconds, int frameRate): particles(p), grid(nullptr)
+Simulation::Simulation(int numSeconds, int frameRate): grid(nullptr)
 {
     stepsPerFrame = ceil(1.0 / (dt / (1.0 / frameRate)));
     //numOutputFrames = numSeconds;
     numOutputFrames = frameRate * numSeconds;
-    numParticles = p->numParticles;
     std::cout << "NUMBER OF FINAL FRAMES: " + numOutputFrames;
+}
+
+void Simulation::setParticles(Particles* p) {
+    particles = p;
+    numParticles = p->numParticles;
 }
 
 Simulation::~Simulation() {
@@ -49,8 +53,8 @@ void Simulation::initializeGrid(float cellsize) {
     maxCorner = maxCorner + glm::vec3(cellsize  * 2.0);
 
     // make bigger to see more movement
-    minCorner -= glm::vec3(cellsize * 7.0);
-    maxCorner += glm::vec3(cellsize * 7.0);
+    minCorner += gridMinOffset * grid->cellsize;
+    maxCorner += gridMaxOffset * grid->cellsize;
     // set grid origin and dimensions
     glm::vec3 origin = minCorner;
     glm::vec3 dim = (maxCorner - minCorner) / cellsize; // in cellsize units
@@ -406,7 +410,7 @@ void Simulation::G2P() {
     }
 }
 
-void Simulation::updateParticlePositions(float dt) {
+void Simulation::updateParticlePositions() {
     for(int p = 0; p < particles->numParticles; p++) {
 
         glm::vec3 newPos = glm::vec3(particles->positions(p, 0) + particles->velocities(p, 0) * dt,
@@ -418,7 +422,7 @@ void Simulation::updateParticlePositions(float dt) {
     }
 }
 
-void Simulation::updateGradient(float dt) {
+void Simulation::updateGradient() {
 
     for(int p = 0; p < particles->numParticles; p++) {
 
@@ -523,8 +527,12 @@ void Simulation::RunSimulation(QString output_filepath, GLWidget277* mygl) {
             // transfer attributes to the grid
             P2G();
             // compute Piola Kirchoff stress per particle
-            //computeStress();
-            computeSnowStress();
+            if(isSnow) {
+                computeSnowStress();
+            }else {
+                computeStress();
+            }
+
             // compute forces on grid using stress
             computeForces();
             // apply forces to grid velocity
@@ -533,14 +541,13 @@ void Simulation::RunSimulation(QString output_filepath, GLWidget277* mygl) {
             // transfer attributes back to particles
             G2P();
             // update F
-            updateGradient(dt);
+            updateGradient();
             //update particle positions
-            updateParticlePositions(dt);
-
+            updateParticlePositions();
 
             step--;
         }
-        saveToBgeo(output_filepath);
+        saveToGeo(output_filepath);
         frameNumber++;
         i--;
     }
@@ -565,7 +572,7 @@ void Simulation::saveToObj(QString output_filepath) {
 }
 
 
-void Simulation::saveToBgeo(QString output_filepath) {
+void Simulation::saveToGeo(QString output_filepath) {
     if(output_filepath.length() == 0)
     {
         return;

@@ -22,6 +22,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->frameRate->setValue(ui->mygl->getFrameRate());
     ui->numSeconds->setValue(ui->mygl->getNumSeconds());
+    ui->samplerRadius->setValue(ui->mygl->getSamplerRadius());
+    ui->isSnow->setChecked(ui->mygl->getIsSnow());
+    ui->hardeningCo->setValue(ui->mygl->getHardeningCoeff());
+    ui->youngsMod->setValue(ui->mygl->getYoungsMod());
+    ui->thetaC->setValue(ui->mygl->getThetaC());
+    ui->thetaS->setValue(ui->mygl->getThetaS());
+    ui->minX->setValue(ui->mygl->getMinOffset()[0]);
+    ui->minY->setValue(ui->mygl->getMinOffset()[1]);
+    ui->minZ->setValue(ui->mygl->getMinOffset()[2]);
+    ui->maxX->setValue(ui->mygl->getMaxOffset()[0]);
+    ui->maxY->setValue(ui->mygl->getMaxOffset()[1]);
+    ui->maxZ->setValue(ui->mygl->getMaxOffset()[2]);
 
     connect(ui->NewParticleSet, SIGNAL(clicked(bool)), ui->mygl, SLOT(generateNewParticleSet()));
     connect(ui->SaveSet, SIGNAL(clicked(bool)), ui->mygl, SLOT(saveSet()));
@@ -29,6 +41,19 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->runSim, SIGNAL(clicked(bool)), ui->mygl, SLOT(runSim()));
     connect(ui->frameRate, SIGNAL(valueChanged(int)), ui->mygl, SLOT(updateFrameRate(int)));
     connect(ui->numSeconds, SIGNAL(valueChanged(int)), ui->mygl, SLOT(updateNumSeconds(int)));
+    connect(ui->samplerRadius, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setSamplerRadius(double)));
+    connect(ui->isSnow, SIGNAL(stateChanged(int)), ui->mygl, SLOT(setIsSnow(int)));
+    connect(ui->hardeningCo, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setHardeningCoeff(double)));
+//    connect(ui->youngsMod, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setYoungsMod(double)));
+//    connect(ui->thetaC, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setThetaC(double)));
+//    connect(ui->thetaS, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setThetaS(double)));
+//    connect(ui->minX, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMinX(double)));
+//    connect(ui->minY, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMinY(double)));
+//    connect(ui->minZ, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMinZ(double)));
+//    connect(ui->maxX, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMaxX(double)));
+//    connect(ui->maxY, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMaxY(double)));
+//    connect(ui->maxZ, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMaxZ(double)));
+
 }
 
 MainWindow::~MainWindow()

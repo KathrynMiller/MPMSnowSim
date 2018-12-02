@@ -20,7 +20,7 @@ MyGL::MyGL(QWidget *parent)
     : GLWidget277(parent),
       m_geomCylinder(this), m_geomSphere(this),
       m_progLambert(this), m_progFlat(this),
-      m_glCamera(), simulation(nullptr),
+      m_glCamera(), simulation(new Simulation(numSeconds, frameRate)),
       time(QDateTime::currentMSecsSinceEpoch()), poissonSampler(new PoissonSampler()), running(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
@@ -113,7 +113,7 @@ void MyGL::paintGL()
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0,0,0));
     //Send the geometry's transformation matrix to the shader
     // check if mesh is bound and draw with appropriate shader
-    if(simulation != nullptr) {
+    if(simulation != nullptr && simulation->particles != nullptr) {
         m_progLambert.setModelMatrix(model);
         m_progLambert.draw(*(simulation->particles));
     }
@@ -194,14 +194,15 @@ void MyGL::generateNewParticleSet() {
     // sample from new mesh
     poissonSampler->SampleMesh(filename);
 
-    simulation = new Simulation(new Particles(this, poissonSampler->validSamples.size()), numSeconds, frameRate);
-
+    //simulation = new Simulation(new Particles(this, poissonSampler->validSamples.size()), numSeconds, frameRate);
+    Particles* p = new Particles(this, poissonSampler->validSamples.size());
     // transfer positions to particles
     for(int i = 0; i < poissonSampler->validSamples.size(); i++) {
-        simulation->particles->positions(i, 0) = poissonSampler->validSamples[i]->pos[0];
-        simulation->particles->positions(i, 1) = poissonSampler->validSamples[i]->pos[1];
-        simulation->particles->positions(i, 2) = poissonSampler->validSamples[i]->pos[2];
+        p->positions(i, 0) = poissonSampler->validSamples[i]->pos[0];
+        p->positions(i, 1) = poissonSampler->validSamples[i]->pos[1];
+        p->positions(i, 2) = poissonSampler->validSamples[i]->pos[2];
     }
+    simulation->setParticles(p);
     simulation->particles->create();
 }
 
@@ -217,8 +218,8 @@ void MyGL::saveSet() {
 
         for(int i = 0; i < simulation->particles->positions.rows(); i++) {
             stream << QString::number(simulation->particles->positions(i, 0)) << " "
-                      << QString::number(simulation->particles->positions(i, 1)) << " "
-                      << QString::number(simulation->particles->positions(i, 2)) << endl;
+                   << QString::number(simulation->particles->positions(i, 1)) << " "
+                   << QString::number(simulation->particles->positions(i, 2)) << endl;
         }
 
     }
@@ -251,27 +252,23 @@ void MyGL::loadSet() {
         file.close();
     }
 
-//    std::vector<glm::vec3> positions = std::vector<glm::vec3>();
-//    positions.push_back(glm::vec3(0, 0, 0));
-//    positions.push_back(glm::vec3(-.2, 0, .1));
-//    positions.push_back(glm::vec3(.3, 0, -.1));
-    simulation = new Simulation(new Particles(this, positions.size()), numSeconds, frameRate);
-
-    for(int i = 0; i < simulation->particles->positions.rows(); i++) {
-        simulation->particles->positions(i, 0) = positions[i][0];
-        simulation->particles->positions(i, 1) = positions[i][1];
-        simulation->particles->positions(i, 2) = positions[i][2];
+    //simulation = new Simulation(new Particles(this, positions.size()), numSeconds, frameRate);
+    Particles* p = new Particles(this, positions.size());
+    for(int i = 0; i < p->positions.rows(); i++) {
+        p->positions(i, 0) = positions[i][0];
+        p->positions(i, 1) = positions[i][1];
+        p->positions(i, 2) = positions[i][2];
     }
-
+    simulation->setParticles(p);
     simulation->particles->create();
 }
 
 void MyGL::runSim() {
     // select location to save obj files
     QString output_filepath = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
-                                                "/home",
-                                                QFileDialog::ShowDirsOnly
-                                                | QFileDialog::DontResolveSymlinks);
+                                                                "/home",
+                                                                QFileDialog::ShowDirsOnly
+                                                                | QFileDialog::DontResolveSymlinks);
     simulation->isRunning = true;
     simulation->RunSimulation(output_filepath, this);
 }
@@ -284,7 +281,7 @@ void MyGL::timerUpdate()
     int64_t dt = t - time;
     //reset time
     time = t;
-// set dt of sim?
+    // set dt of sim?
     update();
 }
 
@@ -302,4 +299,89 @@ void MyGL::updateNumSeconds(int n) {
 
 void MyGL::updateFrameRate(int n) {
     frameRate = n;
+}
+
+void MyGL::setYoungsMod(double n) {
+    this->simulation->youngsMod = n;
+}
+
+void MyGL::setThetaC(double n) {
+    simulation->thetaC = n;
+}
+
+void MyGL::setThetaS(double n) {
+    simulation->thetaS = n;
+}
+
+void MyGL::setHardeningCoeff(double n) {
+    simulation->hardeningCoeff = n;
+}
+
+void MyGL::setMinX(double n) {
+    simulation->gridMinOffset[0] = n;
+}
+
+void MyGL::setMaxX(double n) {
+    simulation->gridMaxOffset[0] = n;
+}
+
+void MyGL::setMinY(double n) {
+    simulation->gridMinOffset[1] = n;
+}
+
+void MyGL::setMaxY(double n) {
+    simulation->gridMaxOffset[1] = n;
+}
+
+void MyGL::setMinZ(double n) {
+    simulation->gridMinOffset[2] = n;
+}
+
+void MyGL::setMaxZ(double n) {
+    simulation->gridMaxOffset[2] = n;
+}
+
+void MyGL::setIsSnow(int i) {
+    if(i > 0) {
+        simulation->isSnow = true;
+    } else {
+        simulation->isSnow = false;
+    }
+
+}
+
+void MyGL::setSamplerRadius(double n) {
+    poissonSampler->radius = n;
+}
+
+double MyGL::getYoungsMod() {
+    simulation->youngsMod;
+}
+
+double MyGL::getThetaC() {
+    return simulation->thetaC;
+}
+
+double MyGL::getThetaS() {
+    return simulation->thetaS;
+}
+
+double MyGL::getHardeningCoeff() {
+    return simulation->hardeningCoeff;
+}
+
+glm::vec3 MyGL::getMinOffset() {
+    return simulation->gridMinOffset;
+}
+
+glm::vec3 MyGL::getMaxOffset() {
+    return simulation->gridMaxOffset;
+}
+
+bool MyGL::getIsSnow() {
+    return simulation->isSnow;
+}
+
+double MyGL::getSamplerRadius() {
+    return poissonSampler->radius;
 }

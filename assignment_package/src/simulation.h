@@ -7,25 +7,35 @@ class Simulation
 {
 
 public:
-    Simulation(Particles *p, int numSeconds, int frameRate);
+    Simulation(int numSeconds, int frameRate);
     ~Simulation();
+    void setParticles(Particles* p);
 
     // the set of particles over which to run the sim
     Particles* particles;
-
     // background grid for the particles
     Grid* grid;
 
     int numParticles;
     int stepsPerFrame;
     float dt = 1e-3;
-
     int frameNumber = 0;
     int numOutputFrames; // default number of frames to simulate
     // used to modify dt
     float maxParticleVelocity = -INFINITY;
-
     bool isRunning = false;
+
+    // constants that determine the consistency of the snow and can be changed in the gui
+    float youngsMod = 1.4 * pow(10.0, 5.0);
+    float poisson = 0.2;
+    float hardeningCoeff = 10.0;
+    float thetaC = 2.5 * pow(10.0, -2.0);
+    float thetaS = 7.5 * pow(10.0, -3.0);
+    glm::vec3 gridMinOffset = glm::vec3(-5, -5, -5);
+    glm::vec3 gridMaxOffset = glm::vec3(5, 5, 5);
+    bool isSnow = true;
+
+
 
     void fillKernelWeights();
     // helper for finding the base node of a particle's kernel
@@ -39,7 +49,7 @@ public:
     void computeSnowStress();
     // compute forces
     void computeForces();
-    void updateGradient(float dt);
+    void updateGradient();
 
     // G2P
     void G2P();
@@ -48,11 +58,11 @@ public:
     void initializeGrid(float cellsize);
 
     // calculations for one timestep of the sim
-    void updateParticlePositions(float dt);
+    void updateParticlePositions();
 
     // saves current particle positions in an obj file
     void saveToObj(QString output_filepath);
-    void saveToBgeo(QString output_filepath);
+    void saveToGeo(QString output_filepath);
 
     // updates the particles positions in accordance with the MPM paper
     // takes in the file path where the obj files for each step will be stored
@@ -63,5 +73,4 @@ public:
     Eigen::Vector3d getWeightGradient(KernelWeights *kernelWeight, glm::vec3 particle, glm::vec3 node);
     // returns list of neighboring node positions for iteration
     std::vector<glm::vec3> getNeighbors(glm::vec3 particle);
-
 };
