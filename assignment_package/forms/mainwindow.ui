@@ -716,7 +716,7 @@
      <rect>
       <x>10</x>
       <y>360</y>
-      <width>186</width>
+      <width>218</width>
       <height>241</height>
      </rect>
     </property>
@@ -800,7 +800,7 @@
        <item>
         <widget class="QSpinBox" name="minY">
          <property name="minimum">
-          <number>-99</number>
+          <number>-9999</number>
          </property>
          <property name="maximum">
           <number>0</number>
@@ -810,7 +810,7 @@
        <item>
         <widget class="QSpinBox" name="minZ">
          <property name="minimum">
-          <number>-99</number>
+          <number>-9999</number>
          </property>
          <property name="maximum">
           <number>0</number>
@@ -869,13 +869,25 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
-        <widget class="QSpinBox" name="maxX"/>
+        <widget class="QSpinBox" name="maxX">
+         <property name="maximum">
+          <number>9999</number>
+         </property>
+        </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="maxY"/>
+        <widget class="QSpinBox" name="maxY">
+         <property name="maximum">
+          <number>9999</number>
+         </property>
+        </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="maxZ"/>
+        <widget class="QSpinBox" name="maxZ">
+         <property name="maximum">
+          <number>9999</number>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

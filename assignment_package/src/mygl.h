@@ -86,14 +86,16 @@ public slots:
     void setThetaC(double n);
     void setThetaS(double n);
     void setHardeningCoeff(double n);
-    void setMinX(double n);
-    void setMaxX(double n);
-    void setMinY(double n);
-    void setMaxY(double n);
-    void setMinZ(double n);
-    void setMaxZ(double n);
+    void setMinX(int n);
+    void setMaxX(int n);
+    void setMinY(int n);
+    void setMaxY(int n);
+    void setMinZ(int n);
+    void setMaxZ(int n);
     void setIsSnow(int i);
     void setSamplerRadius(double n);
+
+    void rand(double d);
 
     double getYoungsMod();
     double getThetaC();

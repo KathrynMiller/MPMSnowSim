@@ -7,6 +7,7 @@
 #include <QListWidget>
 #include <QStringList>
 #include <QString>
+#include <QAbstractSpinBox>
 #include <QRegularExpression>
 #include <QMap>
 #include <QJsonDocument>
@@ -44,16 +45,15 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->samplerRadius, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setSamplerRadius(double)));
     connect(ui->isSnow, SIGNAL(stateChanged(int)), ui->mygl, SLOT(setIsSnow(int)));
     connect(ui->hardeningCo, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setHardeningCoeff(double)));
-//    connect(ui->youngsMod, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setYoungsMod(double)));
-//    connect(ui->thetaC, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setThetaC(double)));
-//    connect(ui->thetaS, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setThetaS(double)));
-//    connect(ui->minX, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMinX(double)));
-//    connect(ui->minY, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMinY(double)));
-//    connect(ui->minZ, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMinZ(double)));
-//    connect(ui->maxX, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMaxX(double)));
-//    connect(ui->maxY, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMaxY(double)));
-//    connect(ui->maxZ, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setMaxZ(double)));
-
+    connect(ui->youngsMod, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setYoungsMod(double)));
+    connect(ui->thetaC, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setThetaC(double)));
+    connect(ui->thetaS, SIGNAL(valueChanged(double)), ui->mygl, SLOT(setThetaS(double)));
+    connect(ui->minX, SIGNAL(valueChanged(int)), ui->mygl, SLOT(setMinX(int)));
+    connect(ui->minY, SIGNAL(valueChanged(int)), ui->mygl, SLOT(setMinY(int)));
+    connect(ui->minZ, SIGNAL(valueChanged(int)), ui->mygl, SLOT(setMinZ(int)));
+    connect(ui->maxX, SIGNAL(valueChanged(int)), ui->mygl, SLOT(setMaxX(int)));
+    connect(ui->maxY, SIGNAL(valueChanged(int)), ui->mygl, SLOT(setMaxY(int)));
+    connect(ui->maxZ, SIGNAL(valueChanged(int)), ui->mygl, SLOT(setMaxZ(int)));
 }
 
 MainWindow::~MainWindow()

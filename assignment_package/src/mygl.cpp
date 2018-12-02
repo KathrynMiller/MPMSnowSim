@@ -216,7 +216,11 @@ void MyGL::generateNewParticleSet() {
     }
     simulation->setParticles(p);
     simulation->particles->create();
-    gridBoundary = new GridBoundary(this, simulation->cellSize, minCorner, maxCorner);
+    simulation->minCorner = minCorner;
+    simulation->maxCorner = maxCorner;
+    minCorner += simulation->gridMinOffset * simulation->cellSize;
+    maxCorner += simulation->gridMaxOffset * simulation->cellSize;
+    gridBoundary = new GridBoundary(this, minCorner, maxCorner);
     gridBoundary->create();
 
 }
@@ -285,8 +289,12 @@ void MyGL::loadSet() {
         maxCorner[2] = std::max(positions[i][2], maxCorner[2]);
     }
     simulation->setParticles(p);
+    simulation->minCorner = minCorner;
+    simulation->maxCorner = maxCorner;
     simulation->particles->create();
-    gridBoundary = new GridBoundary(this, simulation->cellSize, minCorner, maxCorner);
+    minCorner += simulation->gridMinOffset * simulation->cellSize;
+    maxCorner += simulation->gridMaxOffset * simulation->cellSize;
+    gridBoundary = new GridBoundary(this, minCorner, maxCorner);
     gridBoundary->create();
 }
 
@@ -344,28 +352,46 @@ void MyGL::setHardeningCoeff(double n) {
     simulation->hardeningCoeff = n;
 }
 
-void MyGL::setMinX(double n) {
+void MyGL::setMinX(int n) {
     simulation->gridMinOffset[0] = n;
+    gridBoundary->min[0] = simulation->minCorner[0] + n * simulation->cellSize;
+    gridBoundary->destroy();
+    gridBoundary->create();
 }
 
-void MyGL::setMaxX(double n) {
+void MyGL::setMaxX(int n) {
     simulation->gridMaxOffset[0] = n;
+    gridBoundary->max[0] = simulation->maxCorner[0] + n * simulation->cellSize;
+    gridBoundary->destroy();
+    gridBoundary->create();
 }
 
-void MyGL::setMinY(double n) {
+void MyGL::setMinY(int n) {
     simulation->gridMinOffset[1] = n;
+    gridBoundary->min[1] = simulation->minCorner[1] + n * simulation->cellSize;
+    gridBoundary->destroy();
+    gridBoundary->create();
 }
 
-void MyGL::setMaxY(double n) {
+void MyGL::setMaxY(int n) {
     simulation->gridMaxOffset[1] = n;
+    gridBoundary->max[1] = simulation->maxCorner[1] + n * simulation->cellSize;
+    gridBoundary->destroy();
+    gridBoundary->create();
 }
 
-void MyGL::setMinZ(double n) {
+void MyGL::setMinZ(int n) {
     simulation->gridMinOffset[2] = n;
+    gridBoundary->min[2] = simulation->minCorner[2] + n * simulation->cellSize;
+    gridBoundary->destroy();
+    gridBoundary->create();
 }
 
-void MyGL::setMaxZ(double n) {
+void MyGL::setMaxZ(int n) {
     simulation->gridMaxOffset[2] = n;
+    gridBoundary->max[2] = simulation->maxCorner[2] + n * simulation->cellSize;
+    gridBoundary->destroy();
+    gridBoundary->create();
 }
 
 void MyGL::setIsSnow(int i) {
@@ -411,4 +437,8 @@ bool MyGL::getIsSnow() {
 
 double MyGL::getSamplerRadius() {
     return poissonSampler->radius;
+}
+
+void MyGL::rand(double d) {
+    simulation->youngsMod = d;
 }

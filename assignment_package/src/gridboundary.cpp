@@ -1,7 +1,7 @@
 #include "gridboundary.h"
 
-GridBoundary::GridBoundary(GLWidget277 *context, float cellSize, glm::vec3 min, glm::vec3 max) :
-    Drawable(context), min(min), max(max), cellSize(cellSize) {}
+GridBoundary::GridBoundary(GLWidget277 *context, glm::vec3 min, glm::vec3 max) :
+    Drawable(context), min(min), max(max) {}
 
 
 void GridBoundary::create() {
@@ -9,19 +9,62 @@ void GridBoundary::create() {
     std::vector<glm::vec3> color;
     std::vector<GLuint> idx;
 
-    int idxNum = 0;
-    //    for(int i = 0; i < numParticles; i++) {
-    //        vert_pos.push_back(glm::vec4(positions.coeff(i, 0), positions.coeff(i, 1), positions.coeff(i, 2), 1));
-    //        vertIdx.push_back(idxNum);
-    //        idxNum ++;
-    //        color.push_back(glm::vec3(255, 255, 255));
-    //    }
-    pos.push_back(glm::vec4(min[0] - 1, min[1] - 1, min[2] - 1, 1));
-    pos.push_back(glm::vec4(max[0] + 1, max[1] + 1, max[2] + 1, 1));
-    color.push_back(glm::vec3(255, 0, 255));
-    color.push_back(glm::vec3(255, 0, 255));
+    glm::vec4 p0 = glm::vec4(min[0], max[1], min[0], 1);
+    glm::vec4 p1 = glm::vec4(min[0], min[1], min[0], 1);
+    glm::vec4 p2 = glm::vec4(min[0], min[1], max[0], 1);
+    glm::vec4 p3 = glm::vec4(min[0], max[1], max[0], 1);
+
+    glm::vec4 p4 = glm::vec4(max[0], max[1], min[0], 1);
+    glm::vec4 p5 = glm::vec4(max[0], max[1], max[0], 1);
+    glm::vec4 p6 = glm::vec4(max[0], min[1], max[0], 1);
+    glm::vec4 p7 = glm::vec4(max[0], min[1], min[0], 1);
+
+    pos.push_back(p0);
+    pos.push_back(p1);
+    pos.push_back(p2);
+    pos.push_back(p3);
+    pos.push_back(p4);
+    pos.push_back(p5);
+    pos.push_back(p6);
+    pos.push_back(p7);
+
     idx.push_back(0);
     idx.push_back(1);
+    idx.push_back(1);
+    idx.push_back(2);
+    idx.push_back(2);
+    idx.push_back(3);
+    idx.push_back(3);
+    idx.push_back(0);
+
+    idx.push_back(0);
+    idx.push_back(4);
+    idx.push_back(4);
+    idx.push_back(5);
+    idx.push_back(5);
+    idx.push_back(3);
+
+    idx.push_back(4);
+    idx.push_back(7);
+    idx.push_back(7);
+    idx.push_back(6);
+    idx.push_back(6);
+    idx.push_back(5);
+
+    idx.push_back(6);
+    idx.push_back(2);
+    idx.push_back(7);
+    idx.push_back(1);
+
+glm::vec3 col = glm::vec3(0, 255, 255);
+    color.push_back(col);
+    color.push_back(col);
+    color.push_back(col);
+    color.push_back(col);
+    color.push_back(col);
+    color.push_back(col);
+    color.push_back(col);
+    color.push_back(col);
 
     count = idx.size();
 
