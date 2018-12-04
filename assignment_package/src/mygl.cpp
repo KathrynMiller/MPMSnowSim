@@ -122,6 +122,12 @@ void MyGL::paintGL()
         m_progLambert.draw(*gridBoundary);
 
         for(Collider* c: simulation->colliders) {
+            model = glm::translate(glm::mat4(1.0f), c->translation)
+                    * glm::rotate(glm::mat4(1.0f), glm::radians(c->rotation.x), glm::vec3(1,0,0))
+                    * glm::rotate(glm::mat4(1.0f), glm::radians(c->rotation.y), glm::vec3(0,1,0))
+                    * glm::rotate(glm::mat4(1.0f), glm::radians(c->rotation.z), glm::vec3(0,0,1))
+                    * glm::scale(glm::mat4(1.0f), c->scale);
+            m_progLambert.setModelMatrix(model);
             m_progLambert.draw(*c);
             //glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0,0,0));
         }
@@ -193,7 +199,7 @@ void MyGL::keyPressEvent(QKeyEvent *e)
 }
 
 void MyGL::addColliders() {
-    SphereCollider* sphere = new SphereCollider(glm::vec3(0, -1, 0), .5, this, glm::vec3(), glm::vec3(), glm::vec3());
+    SphereCollider* sphere = new SphereCollider(glm::vec3(0, -1, 0), .5, this, glm::vec3(), glm::vec3(), glm::vec3(2, 2, 2));
     simulation->colliders.push_back(sphere);
     for(Collider* c: simulation->colliders) {
         c->create();
