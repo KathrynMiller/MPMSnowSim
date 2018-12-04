@@ -445,8 +445,8 @@
    <widget class="QWidget" name="verticalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>390</x>
-      <y>350</y>
+      <x>470</x>
+      <y>360</y>
       <width>183</width>
       <height>229</height>
      </rect>
@@ -518,8 +518,8 @@
    <widget class="QWidget" name="verticalLayoutWidget_4">
     <property name="geometry">
      <rect>
-      <x>600</x>
-      <y>350</y>
+      <x>680</x>
+      <y>360</y>
       <width>160</width>
       <height>201</height>
      </rect>
@@ -596,7 +596,7 @@
    <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>210</x>
+      <x>260</x>
       <y>350</y>
       <width>160</width>
       <height>276</height>
@@ -644,6 +644,9 @@
       <widget class="QDoubleSpinBox" name="youngsMod">
        <property name="decimals">
         <number>7</number>
+       </property>
+       <property name="maximum">
+        <double>9999.000000000000000</double>
        </property>
        <property name="singleStep">
         <double>1.000000000000000</double>

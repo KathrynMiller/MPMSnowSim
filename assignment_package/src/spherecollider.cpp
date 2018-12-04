@@ -1,6 +1,7 @@
 #include "spherecollider.h"
 
-SphereCollider::SphereCollider(const glm::vec3 &center, const float &radius): center(center), radius(radius)
+SphereCollider::SphereCollider(const glm::vec3 &center, const float &radius, glm::vec3 t, glm::vec3 r, glm::vec3 s):
+    center(center), radius(radius), Collider(t, r, s)
 {}
 
 bool SphereCollider::isInside(glm::vec3 point) {

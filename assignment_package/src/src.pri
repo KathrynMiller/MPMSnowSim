@@ -26,7 +26,8 @@ SOURCES += \
     $$PWD/warpfunctions.cpp \
     $$PWD/grid.cpp \
     $$PWD/spherecollider.cpp \
-    $$PWD/gridboundary.cpp
+    $$PWD/gridboundary.cpp \
+    $$PWD/collider.cpp
 
 HEADERS += \
     $$PWD/la.h \
@@ -53,6 +54,7 @@ HEADERS += \
     $$PWD/warpfunctions.h \
     $$PWD/grid.h \
     $$PWD/spherecollider.h \
-    $$PWD/gridboundary.h
+    $$PWD/gridboundary.h \
+    $$PWD/collider.h
 
 DISTFILES +=

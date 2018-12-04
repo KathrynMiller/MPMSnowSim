@@ -49,8 +49,8 @@ void Simulation::initializeGrid(float cellsize) {
     maxCorner = maxCorner + glm::vec3(cellsize  * 2.0);
 
     // make bigger to see more movement
-    minCorner += gridMinOffset * grid->cellsize;
-    maxCorner += gridMaxOffset * grid->cellsize;
+    minCorner += gridMinOffset * cellsize;
+    maxCorner += gridMaxOffset * cellsize;
     // set grid origin and dimensions
     glm::vec3 origin = minCorner;
     glm::vec3 dim = (maxCorner - minCorner) / cellsize; // in cellsize units
@@ -492,7 +492,7 @@ void Simulation::updateGradient() {
             }
 
             for (int i = 0; i < 3; i++){
-                Sigmae(i,i) = std::max(1.0 - thetaC, std::min(Sigmae(i,i), 1.0 + thetaS));
+                matSigmae(i,i) = std::max(1.0 - thetaC, std::min(matSigmae(i,i), 1.0 + thetaS));
             }
 
             // NOTE changed this to use mat Sigmae
