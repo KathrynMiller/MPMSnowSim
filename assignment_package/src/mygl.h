@@ -69,6 +69,8 @@ protected:
 private slots:
     /// Slot that gets called ~60 times per second
     void timerUpdate();
+    // adds colliders to the sim once loaded
+    void addColliders();
     // sample new mesh
     void generateNewParticleSet();
     // save current set of particles

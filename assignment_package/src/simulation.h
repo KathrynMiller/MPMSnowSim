@@ -1,6 +1,7 @@
 #pragma once
 #include "particles.h"
 #include "grid.h"
+#include "sphereCollider.h"
 #include "eigen-git-mirror/Eigen/Core"
 
 class Simulation
@@ -13,6 +14,7 @@ public:
 
     // the set of particles over which to run the sim
     Particles* particles;
+    std::vector<Collider*> colliders;
     // background grid for the particles
     Grid* grid;
     float cellSize = .07;
@@ -53,7 +55,7 @@ public:
     // compute forces
     void computeForces();
     void updateGradient();
-
+    void handleParticleCollisions(Collider* collider);
     // G2P
     void G2P();
 

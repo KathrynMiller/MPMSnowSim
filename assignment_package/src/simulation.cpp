@@ -7,7 +7,8 @@
 #include "eigen-git-mirror/Eigen/Dense"
 #include "eigen-git-mirror/Eigen/SVD"
 #include "eigen-git-mirror/Eigen/Core"
-#include <Partio.h>
+#include "iostream"
+#include "spherecollider.h"
 
 Simulation::Simulation(int numSeconds, int frameRate): grid(nullptr)
 {
@@ -406,6 +407,58 @@ void Simulation::G2P() {
     }
 }
 
+void Simulation::handleParticleCollisions(Collider* collider) {
+    bool sticky = true;
+    float friction = 0.0f; // mu
+    // for all grid node positions
+    for(int i = 0; i < numParticles; i++) {
+        glm::vec3 worldPos = toVec3(particles->positions, i);
+        if(collider->isInside(worldPos)) {
+            if(sticky) {
+                particles->positions(i, 0) = 0.0;
+                particles->positions(i, 1) = 0.0;
+                particles->positions(i, 2) = 0.0;
+            } else {
+                //                        glm::vec3 n = collider->getNormal(worldPos);
+                //                        float dot = glm::dot(n, toVec3(gridVelocities, index));
+                //                        if (dot < 0){
+                //                            gridVelocities(index) = gridVelocities(index) - dot * n;
+                //                            if (friction != 0){
+                //                                if (-dot * friction < gridAttr[index].velG.norm())
+                //                                    gridAttr[index].velG += dot * friction * gridAttr[index].velG.normalized();
+                //                                else
+                //                                    gridAttr[index].velG = Vector3f::Zero();
+                //                            }
+                //                        }
+                glm::vec3 n = collider->getNormal(worldPos);
+                glm::vec3 v = toVec3(particles->velocities, i);
+                glm::vec3 vCo = glm::vec3(); // velocity of collider, static for now
+                glm::vec3 vRel = v - vCo;
+
+                float vN = glm::dot(vRel, n);
+                if(vN >= 0) { // separating, no collision
+                    return;
+                }
+
+                glm::vec3 vRelPrime;
+                glm::vec3 vPrime;
+                glm::vec3 vT = vRel - (n * vN);
+                if(vT.length() <= (-friction * vN)) {
+                    vRelPrime = glm::vec3();
+                } else{
+                    vRelPrime = vT + (friction * (vN * (glm::normalize(vT)))); // friction 0 for now so doesn't matter
+                }
+
+                vPrime = vRelPrime + vCo;
+
+                particles->velocities(i, 0) = vPrime[0];
+                particles->velocities(i, 1) = vPrime[1];
+                particles->velocities(i, 2) = vPrime[2];
+            }
+        }
+    }
+}
+
 void Simulation::updateParticlePositions() {
     for(int p = 0; p < particles->numParticles; p++) {
 
@@ -495,7 +548,6 @@ void Simulation::updateGradient() {
                 matSigmae(i,i) = std::max(1.0 - thetaC, std::min(matSigmae(i,i), 1.0 + thetaS));
             }
 
-            // NOTE changed this to use mat Sigmae
             particles->deformations[p]->Fe = Ue * matSigmae * Ve.transpose();
             particles->deformations[p]->Fp = Ve * matSigmae.inverse() * Ue.transpose() * newF;
         } // end if plastic
@@ -531,9 +583,21 @@ void Simulation::RunSimulation(QString output_filepath, GLWidget277* mygl) {
             computeForces();
             // apply forces to grid velocity
             grid->applyForces(dt);
-            grid->handleCollisions();
+
+            // border collisions on grid
+            grid->handleBorderCollisions();
+
+            for(Collider* c: colliders) {
+                grid->handleGridCollisions(c);
+            }
+
             // transfer attributes back to particles
             G2P();
+
+            for(Collider* c: colliders) {
+                handleParticleCollisions(c);
+            }
+
             // update F
             updateGradient();
             //update particle positions

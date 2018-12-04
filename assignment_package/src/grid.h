@@ -1,5 +1,6 @@
 #pragma once
 #include "la.h"
+#include "spherecollider.h"
 #include "eigen-git-mirror/Eigen/Core"
 
 
@@ -32,7 +33,8 @@ public:
     void setForces(glm::vec3 pos, glm::vec3 val);
 
     void applyForces(float dt);
-    void handleCollisions();
+    void handleBorderCollisions();
+    void handleGridCollisions(Collider* collider);
 
     void clear();
 

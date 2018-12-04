@@ -38,8 +38,10 @@ MyGL::~MyGL()
     glDeleteVertexArrays(1, &vao);
     m_geomCylinder.destroy();
     m_geomSphere.destroy();
-    simulation->particles->destroy();
-    simulation->~Simulation();
+    if(simulation != nullptr) {
+        simulation->particles->destroy();
+        simulation->~Simulation();
+    }
 }
 
 void MyGL::initializeGL()
@@ -118,6 +120,11 @@ void MyGL::paintGL()
         m_progLambert.setModelMatrix(model);
         m_progLambert.draw(*(simulation->particles));
         m_progLambert.draw(*gridBoundary);
+
+        for(Collider* c: simulation->colliders) {
+            m_progLambert.draw(*c);
+            //glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0,0,0));
+        }
     }
 
 
@@ -185,6 +192,14 @@ void MyGL::keyPressEvent(QKeyEvent *e)
     update();  // Calls paintGL, among other things
 }
 
+void MyGL::addColliders() {
+    SphereCollider* sphere = new SphereCollider(glm::vec3(0, -1, 0), .5, this, glm::vec3(), glm::vec3(), glm::vec3());
+    simulation->colliders.push_back(sphere);
+    for(Collider* c: simulation->colliders) {
+        c->create();
+    }
+}
+
 
 void MyGL::generateNewParticleSet() {
     QString filename = QFileDialog::getOpenFileName(0, QString("Load Scene File"), QDir::currentPath().append(QString("../../")), QString("*.obj"));
@@ -222,6 +237,7 @@ void MyGL::generateNewParticleSet() {
     maxCorner += simulation->gridMaxOffset * simulation->cellSize;
     gridBoundary = new GridBoundary(this, minCorner, maxCorner);
     gridBoundary->create();
+    addColliders();
 
 }
 
@@ -296,6 +312,7 @@ void MyGL::loadSet() {
     maxCorner += simulation->gridMaxOffset * simulation->cellSize;
     gridBoundary = new GridBoundary(this, minCorner, maxCorner);
     gridBoundary->create();
+    addColliders();
 }
 
 void MyGL::runSim() {

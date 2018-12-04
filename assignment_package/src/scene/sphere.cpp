@@ -7,7 +7,7 @@ static const int SPH_VERT_COUNT = 382;
 
 Sphere::Sphere(GLWidget277 *context) : Drawable(context)
 {}
-
+/*
 //These are functions that are only defined in this cpp file. They're used for organizational purposes
 //when filling the arrays used to hold the vertex and index data.
 void createSphereVertexPositions(glm::vec4 (&sph_vert_pos)[SPH_VERT_COUNT]){
@@ -93,9 +93,11 @@ void createSphereIndices(GLuint (&sph_idx)[SPH_IDX_COUNT]){
     sph_idx[2279] = 361;
     index += 3;
 }
+*/
 
 void Sphere::create()
 {
+    /*
     GLuint sph_idx[SPH_IDX_COUNT];
     glm::vec4 sph_vert_pos[SPH_VERT_COUNT];
     glm::vec4 sph_vert_nor[SPH_VERT_COUNT];
@@ -124,4 +126,5 @@ void Sphere::create()
     generateNor();
     mp_context->glBindBuffer(GL_ARRAY_BUFFER, bufNor);
     mp_context->glBufferData(GL_ARRAY_BUFFER, SPH_VERT_COUNT * sizeof(glm::vec4), sph_vert_nor, GL_STATIC_DRAW);
+    */
 }
