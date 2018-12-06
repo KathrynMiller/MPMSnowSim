@@ -14,6 +14,8 @@
 #include <QJsonValue>
 #include <QDateTime>
 #include <QRegularExpression>
+#include "boxcollider.h"
+#include "spherecollider.h"
 
 
 MyGL::MyGL(QWidget *parent)
@@ -41,6 +43,9 @@ MyGL::~MyGL()
     if(simulation != nullptr) {
         simulation->particles->destroy();
         simulation->~Simulation();
+        for(Collider* c: simulation->colliders) {
+            c->destroy();
+        }
     }
 }
 
@@ -129,7 +134,6 @@ void MyGL::paintGL()
                     * glm::scale(glm::mat4(1.0f), c->scale);
             m_progLambert.setModelMatrix(model);
             m_progLambert.draw(*c);
-            //glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0,0,0));
         }
     }
 
@@ -199,8 +203,14 @@ void MyGL::keyPressEvent(QKeyEvent *e)
 }
 
 void MyGL::addColliders() {
-    SphereCollider* sphere = new SphereCollider(glm::vec3(0, -1, 0), .5, this, glm::vec3(), glm::vec3(), glm::vec3(2, 2, 2));
-    simulation->colliders.push_back(sphere);
+    glm::vec3 center = glm::vec3(0, -1.5, 0);
+    float radius = .5;
+    // node: make sure center = translation and radius = scale for correct visualization
+    SphereCollider* sphere = new SphereCollider(center, radius, this, center, glm::vec3(), glm::vec3(radius, radius, radius));
+    //simulation->colliders.push_back(sphere);
+
+    BoxCollider* box = new BoxCollider(this, glm::vec3(0, -1.5, 0), glm::vec3(0, 0, 45.0), glm::vec3(1, 1, 1));
+    simulation->colliders.push_back(box);
     for(Collider* c: simulation->colliders) {
         c->create();
     }
@@ -217,7 +227,6 @@ void MyGL::generateNewParticleSet() {
     // sample from new mesh
     poissonSampler->SampleMesh(filename);
 
-    //simulation = new Simulation(new Particles(this, poissonSampler->validSamples.size()), numSeconds, frameRate);
     Particles* p = new Particles(this, poissonSampler->validSamples.size());
     glm::vec3 minCorner = glm::vec3(INFINITY);
     glm::vec3 maxCorner = glm::vec3(-INFINITY);

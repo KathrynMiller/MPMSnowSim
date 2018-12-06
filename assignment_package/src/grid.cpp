@@ -85,49 +85,62 @@ void Grid::handleGridCollisions(Collider* collider) {
     for(int i = 0; i < dim[0]; i++) {
         for(int j = 0; j < dim[1]; j++) {
             for(int k = 0; k < dim[2]; k++) {
+                int index = flat(i, j, k);
                 glm::vec3 worldPos = (glm::vec3(i, j, k) * cellsize) + origin;
+                glm::vec3 gridVel = toVec3(gridVelocities, index);
+
                 if(collider->isInside(worldPos)) {
-                    int index = flat(i, j, k);
+
                     if(sticky) {
                         gridVelocities(index, 0) = 0.0;
                         gridVelocities(index, 1) = 0.0;
                         gridVelocities(index, 2) = 0.0;
                     } else {
-//                        glm::vec3 n = collider->getNormal(worldPos);
-//                        float dot = glm::dot(n, toVec3(gridVelocities, index));
-//                        if (dot < 0){
-//                            gridVelocities(index) = gridVelocities(index) - dot * n;
-//                            if (friction != 0){
-//                                if (-dot * friction < gridAttr[index].velG.norm())
-//                                    gridAttr[index].velG += dot * friction * gridAttr[index].velG.normalized();
-//                                else
-//                                    gridAttr[index].velG = Vector3f::Zero();
-//                            }
-//                        }
                         glm::vec3 n = collider->getNormal(worldPos);
-                        glm::vec3 v = toVec3(gridVelocities, index);
-                        glm::vec3 vCo = glm::vec3(); // velocity of collider, static for now
-                        glm::vec3 vRel = v - vCo;
+                        float dot = glm::dot(n, toVec3(gridVelocities, index));
+                        if (dot < 0) {
+                            gridVelocities(index, 0) = gridVel[0] - dot * n[0];
+                            gridVelocities(index, 1) = gridVel[1] - dot * n[1];
+                            gridVelocities(index, 2) = gridVel[2] - dot * n[2];
+                            if (friction != 0){
+                                if (-dot * friction < gridVel.length()) {
+                                    glm::vec3 newVel = gridVel + dot * friction * glm::normalize(gridVel);
+                                    gridVelocities(index, 0) = newVel[0];
+                                    gridVelocities(index, 1) = newVel[1];
+                                    gridVelocities(index, 2) = newVel[2];
+                                }
+                                else {
+                                    gridVelocities(index, 0) = 0.0;
+                                    gridVelocities(index, 1) = 0.0;
+                                    gridVelocities(index, 2) = 0.0;
+                                }
 
-                        float vN = glm::dot(vRel, n);
-                        if(vN >= 0) { // separating, no collision
-                            return;
+                            }
                         }
+                        //                        glm::vec3 n = collider->getNormal(worldPos);
+                        //                        glm::vec3 v = toVec3(gridVelocities, index);
+                        //                        glm::vec3 vCo = glm::vec3(); // velocity of collider, static for now
+                        //                        glm::vec3 vRel = v - vCo;
 
-                        glm::vec3 vRelPrime;
-                        glm::vec3 vPrime;
-                        glm::vec3 vT = vRel - (n * vN);
-                        if(vT.length() <= (-friction * vN)) {
-                            vRelPrime = glm::vec3();
-                        } else{
-                            vRelPrime = vT + (friction * (vN * (glm::normalize(vT)))); // friction 0 for now so doesn't matter
-                        }
+                        //                        float vN = glm::dot(vRel, n);
+                        //                        if(vN >= 0) { // separating, no collision
+                        //                            return;
+                        //                        }
 
-                        vPrime = vRelPrime + vCo;
+                        //                        glm::vec3 vRelPrime;
+                        //                        glm::vec3 vPrime;
+                        //                        glm::vec3 vT = vRel - (n * vN);
+                        //                        if(vT.length() <= (-friction * vN)) {
+                        //                            vRelPrime = glm::vec3();
+                        //                        } else{
+                        //                            vRelPrime = vT + (friction * (vN * (glm::normalize(vT)))); // friction 0 for now so doesn't matter
+                        //                        }
 
-                        gridVelocities(index, 0) = vPrime[0];
-                        gridVelocities(index, 1) = vPrime[1];
-                        gridVelocities(index, 2) = vPrime[2];
+                        //                        vPrime = vRelPrime + vCo;
+
+                        //                        gridVelocities(index, 0) = vPrime[0];
+                        //                        gridVelocities(index, 1) = vPrime[1];
+                        //                        gridVelocities(index, 2) = vPrime[2];
                     }
                 }
             }
@@ -136,36 +149,6 @@ void Grid::handleGridCollisions(Collider* collider) {
 }
 
 void Grid::handleBorderCollisions() {
-    /*
-    float coFric = 0.0f; // mu
-    // n is straight up for plane
-    glm::vec3 n = glm::vec3(0.0, 1.0, 0.0);
-    //TODO make collision object class to be passed in for arbitrary implicit surface collision
-    for(int i = 0; i < gridVelocities.rows(); i++) {
-        glm::vec3 v = toVec3(gridVelocities, i);
-        glm::vec3 vCo = glm::vec3(); // velocity of collider, static for now
-        glm::vec3 vRel = v - vCo;
-
-        float vN = glm::dot(vRel, n);
-        if(vN >= 0) { // separating, no collision
-            return;
-        }
-
-        glm::vec3 vRelPrime;
-        glm::vec3 vPrime;
-        glm::vec3 vT = vRel - (n * vN);
-        if(vT.length() <= (-coFric * vN)) {
-            vRelPrime = glm::vec3();
-        } else{
-            vRelPrime = vT + (coFric * (vN * (glm::normalize(vT)))); // friction 0 for now so doesn't matter
-        }
-
-        vPrime = vRelPrime + vCo;
-
-        gridVelocities(i, 0) = vPrime[0];
-        gridVelocities(i, 1) = vPrime[1];
-        gridVelocities(i, 2) = vPrime[2];
-        */
 
     int thickness = 4;
     int index = 0;
@@ -193,7 +176,7 @@ void Grid::handleBorderCollisions() {
             }
         }
     }
-    // boudanry velocity for y-direction wall
+    // boundary velocity for y-direction wall
     for (int j = 0; j<thickness; j++){
         for (int i = 0; i < X; i++){
             for (int k = 0; k < Z; k++){
@@ -214,7 +197,7 @@ void Grid::handleBorderCollisions() {
             }
         }
     }
-    // boudanry velocity for y-direction wall
+    // boundary velocity for y-direction wall
     for (int k = 0; k<thickness; k++){
         for (int i = 0; i < X; i++){
             for (int j = 0; j < Y; j++){

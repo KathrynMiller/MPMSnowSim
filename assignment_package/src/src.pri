@@ -27,7 +27,8 @@ SOURCES += \
     $$PWD/grid.cpp \
     $$PWD/spherecollider.cpp \
     $$PWD/gridboundary.cpp \
-    $$PWD/collider.cpp
+    $$PWD/collider.cpp \
+    $$PWD/boxcollider.cpp
 
 HEADERS += \
     $$PWD/la.h \
@@ -55,6 +56,7 @@ HEADERS += \
     $$PWD/grid.h \
     $$PWD/spherecollider.h \
     $$PWD/gridboundary.h \
-    $$PWD/collider.h
+    $$PWD/collider.h \
+    $$PWD/boxcollider.h
 
 DISTFILES +=

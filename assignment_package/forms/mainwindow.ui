@@ -488,7 +488,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QDoubleSpinBox" name="samplerRadius"/>
+        <widget class="QDoubleSpinBox" name="samplerRadius">
+         <property name="decimals">
+          <number>10</number>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="NewParticleSet">
@@ -796,7 +800,7 @@
           <number>-99</number>
          </property>
          <property name="maximum">
-          <number>0</number>
+          <number>-4</number>
          </property>
         </widget>
        </item>
@@ -806,7 +810,7 @@
           <number>-9999</number>
          </property>
          <property name="maximum">
-          <number>0</number>
+          <number>-4</number>
          </property>
         </widget>
        </item>
@@ -816,7 +820,7 @@
           <number>-9999</number>
          </property>
          <property name="maximum">
-          <number>0</number>
+          <number>-4</number>
          </property>
         </widget>
        </item>
@@ -873,6 +877,9 @@
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
         <widget class="QSpinBox" name="maxX">
+         <property name="minimum">
+          <number>2</number>
+         </property>
          <property name="maximum">
           <number>9999</number>
          </property>
@@ -880,6 +887,9 @@
        </item>
        <item>
         <widget class="QSpinBox" name="maxY">
+         <property name="minimum">
+          <number>4</number>
+         </property>
          <property name="maximum">
           <number>9999</number>
          </property>
@@ -887,6 +897,9 @@
        </item>
        <item>
         <widget class="QSpinBox" name="maxZ">
+         <property name="minimum">
+          <number>4</number>
+         </property>
          <property name="maximum">
           <number>9999</number>
          </property>

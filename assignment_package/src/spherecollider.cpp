@@ -6,14 +6,19 @@ SphereCollider::SphereCollider(const glm::vec3 &center, const float &radius, GLW
 {}
 
 bool SphereCollider::isInside(glm::vec3 point) const{
-    if((point - center).length() - radius <= 0.0) {
+    float dist2 = glm::length2(point - center);
+    if(dist2 <= radius * radius) {
         return true;
     }
     return false;
 }
 
 glm::vec3 SphereCollider::getNormal(glm::vec3 point) const {
-    return glm::normalize(point - center);
+    glm::vec3 dir = point - center;
+    if (glm::length2(dir) < (float)1e-7) {
+        return glm::vec3();
+    }
+    return glm::normalize(dir);
 }
 
 glm::vec3 SphereCollider::getCenter() const {
@@ -40,8 +45,8 @@ void createSphereVertexPositions(glm::vec4 (&sph_vert_pos)[SPH_VERT_COUNT]){
         //j is the Y axis rotation
         for(int j = 0; j < 20; j++){
             v = glm::rotate(glm::mat4(1.0f), glm::radians(j*18.0f), glm::vec3(0, 1, 0)) *
-                glm::rotate(glm::mat4(1.0f), glm::radians(i*-9.0f), glm::vec3(0, 0, 1)) *
-                glm::vec4(0,0.5f,0,1);
+                    glm::rotate(glm::mat4(1.0f), glm::radians(i*-9.0f), glm::vec3(0, 0, 1)) *
+                    glm::vec4(0,0.5f,0,1);
             sph_vert_pos[(i - 1)*20 + j + 1] = v;
         }
     }
@@ -60,8 +65,8 @@ void createSphereVertexNormals(glm::vec4 (&sph_vert_nor)[SPH_VERT_COUNT]){
         //j is the Y axis rotation
         for(int j = 0; j < 20; j++){
             v = glm::rotate(glm::mat4(1.0f), glm::radians(j*18.0f), glm::vec3(0, 1, 0)) *
-                glm::rotate(glm::mat4(1.0f), glm::radians(i*-9.0f), glm::vec3(0, 0, 1)) *
-                glm::vec4(0,1.0f,0,0);
+                    glm::rotate(glm::mat4(1.0f), glm::radians(i*-9.0f), glm::vec3(0, 0, 1)) *
+                    glm::vec4(0,1.0f,0,0);
             sph_vert_nor[(i - 1)*20 + j + 1] = v;
         }
     }
@@ -119,10 +124,16 @@ void SphereCollider::create() {
     GLuint sph_idx[SPH_IDX_COUNT];
     glm::vec4 sph_vert_pos[SPH_VERT_COUNT];
     glm::vec4 sph_vert_nor[SPH_VERT_COUNT];
+    glm::vec3 sph_vert_col[SPH_VERT_COUNT];
 
     createSphereVertexPositions(sph_vert_pos);
     createSphereVertexNormals(sph_vert_nor);
     createSphereIndices(sph_idx);
+
+    glm::vec3 color = 255.0f * glm::vec3(1.0, 0.0, 1.0);
+    for(int i = 0; i < SPH_VERT_COUNT; i++){
+        sph_vert_col[SPH_VERT_COUNT] = color;
+    }
 
     count = SPH_IDX_COUNT;
 
@@ -144,4 +155,9 @@ void SphereCollider::create() {
     generateNor();
     mp_context->glBindBuffer(GL_ARRAY_BUFFER, bufNor);
     mp_context->glBufferData(GL_ARRAY_BUFFER, SPH_VERT_COUNT * sizeof(glm::vec4), sph_vert_nor, GL_STATIC_DRAW);
+
+    generateCol();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, bufCol);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, SPH_VERT_COUNT * sizeof(glm::vec3), sph_vert_col, GL_STATIC_DRAW);
+
 }
