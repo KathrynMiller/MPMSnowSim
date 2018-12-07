@@ -33,17 +33,15 @@ glm::vec3 BoxCollider::getNormal(glm::vec3 point) const {
     if(left < right && left < down && left < up && left < back && left < front) {
         return inverse_transpose_worldTransform * glm::vec3(-1, 0, 0);
     }
-    if(right < left && right < down && right < up && right < back && right < front) {
-        return inverse_transpose_worldTransform * glm::vec3(1, 0, 0);
-    }
-
     if(up < right && up < down && up < left && up < back && up < front) {
         return inverse_transpose_worldTransform * glm::vec3(0, 1, 0);
+    }
+    if(right < left && right < down && right < up && right < back && right < front) {
+        return inverse_transpose_worldTransform * glm::vec3(1, 0, 0);
     }
     if(down < right && down < left && down < up && down < back && down < front) {
         return inverse_transpose_worldTransform * glm::vec3(0, -1, 0);
     }
-
     if(front < right && front < down && front < up && front < back && front < left) {
         return inverse_transpose_worldTransform * glm::vec3(0, 0, 1);
     }
@@ -56,126 +54,9 @@ glm::vec3 BoxCollider::getNormal(glm::vec3 point) const {
 static const int CUB_IDX_COUNT = 36;
 static const int CUB_VERT_COUNT = 24;
 
-//These are functions that are only defined in this cpp file. They're used for organizational purposes
-//when filling the arrays used to hold the vertex and index data.
-void createCubeVertexPositions(glm::vec3 (&cub_vert_pos)[CUB_VERT_COUNT])
-{
-    int idx = 0;
-    //Front face
-    //UR
-    cub_vert_pos[idx++] = glm::vec3(0.5f, 0.5f, 0.5f);
-    //LR
-    cub_vert_pos[idx++] = glm::vec3(0.5f, -0.5f, 0.5f);
-    //LL
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, -0.5f, 0.5f);
-    //UL
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, 0.5f, 0.5f);
-
-    //Right face
-    //UR
-    cub_vert_pos[idx++] = glm::vec3(0.5f, 0.5f, -0.5f);
-    //LR
-    cub_vert_pos[idx++] = glm::vec3(0.5f, -0.5f, -0.5f);
-    //LL
-    cub_vert_pos[idx++] = glm::vec3(0.5f, -0.5f, 0.5f);
-    //UL
-    cub_vert_pos[idx++] = glm::vec3(0.5f, 0.5f, 0.5f);
-
-    //Left face
-    //UR
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, 0.5f, 0.5f);
-    //LR
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, -0.5f, 0.5f);
-    //LL
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, -0.5f, -0.5f);
-    //UL
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, 0.5f, -0.5f);
-
-    //Back face
-    //UR
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, 0.5f, -0.5f);
-    //LR
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, -0.5f, -0.5f);
-    //LL
-    cub_vert_pos[idx++] = glm::vec3(0.5f, -0.5f, -0.5f);
-    //UL
-    cub_vert_pos[idx++] = glm::vec3(0.5f, 0.5f, -0.5f);
-
-    //Top face
-    //UR
-    cub_vert_pos[idx++] = glm::vec3(0.5f, 0.5f, -0.5f);
-    //LR
-    cub_vert_pos[idx++] = glm::vec3(0.5f, 0.5f, 0.5f);
-    //LL
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, 0.5f, 0.5f);
-    //UL
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, 0.5f, -0.5f);
-
-    //Bottom face
-    //UR
-    cub_vert_pos[idx++] = glm::vec3(0.5f, -0.5f, 0.5f);
-    //LR
-    cub_vert_pos[idx++] = glm::vec3(0.5f, -0.5f, -0.5f);
-    //LL
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, -0.5f, -0.5f);
-    //UL
-    cub_vert_pos[idx++] = glm::vec3(-0.5f, -0.5f, 0.5f);
-}
-
-
-void createCubeVertexNormals(glm::vec3 (&cub_vert_nor)[CUB_VERT_COUNT])
-{
-    int idx = 0;
-    //Front
-    for(int i = 0; i < 4; i++){
-        cub_vert_nor[idx++] = glm::vec3(0,0,1);
-    }
-    //Right
-    for(int i = 0; i < 4; i++){
-        cub_vert_nor[idx++] = glm::vec3(1,0,0);
-    }
-    //Left
-    for(int i = 0; i < 4; i++){
-        cub_vert_nor[idx++] = glm::vec3(-1,0,0);
-    }
-    //Back
-    for(int i = 0; i < 4; i++){
-        cub_vert_nor[idx++] = glm::vec3(0,0,-1);
-    }
-    //Top
-    for(int i = 0; i < 4; i++){
-        cub_vert_nor[idx++] = glm::vec3(0,1,0);
-    }
-    //Bottom
-    for(int i = 0; i < 4; i++){
-        cub_vert_nor[idx++] = glm::vec3(0,-1,0);
-    }
-}
-
-void createCubeIndices(GLuint (&cub_idx)[CUB_IDX_COUNT])
-{
-    int idx = 0;
-    for(int i = 0; i < 6; i++){
-        cub_idx[idx++] = i*4;
-        cub_idx[idx++] = i*4+1;
-        cub_idx[idx++] = i*4+2;
-        cub_idx[idx++] = i*4;
-        cub_idx[idx++] = i*4+2;
-        cub_idx[idx++] = i*4+3;
-    }
-}
-
 void BoxCollider::create()
 {
-    GLuint cub_idx[CUB_IDX_COUNT];
-    glm::vec3 cub_vert_pos[CUB_VERT_COUNT];
-    glm::vec3 cub_vert_nor[CUB_VERT_COUNT];
-    glm::vec3 cub_vert_col[CUB_VERT_COUNT];
-
-    createCubeVertexPositions(cub_vert_pos);
-    createCubeVertexNormals(cub_vert_nor);
-    createCubeIndices(cub_idx);
-std::vector<glm::vec3> col = std::vector<glm::vec3>();
+   std::vector<glm::vec3> col = std::vector<glm::vec3>();
 
     glm::vec3 color(255, 0, 255);
 
@@ -184,66 +65,66 @@ std::vector<glm::vec3> col = std::vector<glm::vec3>();
     }
 
     std::vector<glm::vec4> pos {//front face
-                                glm::vec4(-0.5, -0.5, 0.5, 1),
-                                glm::vec4(0.5, -0.5, 0.5, 1),
-                                glm::vec4(0.5, 0.5, 0.5, 1),
-                                glm::vec4(-0.5, 0.5, 0.5, 1),
-                                //back face
-                                glm::vec4(-0.5, -0.5, -0.5, 1),
-                                glm::vec4(0.5, -0.5, -0.5, 1),
-                                glm::vec4(0.5, 0.5, -0.5, 1),
-                                glm::vec4(-0.5, 0.5, -0.5, 1),
-                                //right face
-                                glm::vec4(0.5, -0.5, 0.5, 1),
-                                glm::vec4(0.5, -0.5, -0.5, 1),
-                                glm::vec4(0.5, 0.5, -0.5, 1),
-                                glm::vec4(0.5, 0.5, 0.5, 1),
-                                //left face
-                                glm::vec4(-0.5, -0.5, 0.5, 1),
-                                glm::vec4(-0.5, -0.5, -0.5, 1),
-                                glm::vec4(-0.5, 0.5, -0.5, 1),
-                                glm::vec4(-0.5, 0.5, 0.5, 1),
-                                //top face
-                                glm::vec4(-0.5, 0.5, 0.5, 1), //16
-                                glm::vec4(0.5, 0.5, 0.5, 1),
-                                glm::vec4(0.5, 0.5, -0.5, 1),
-                                glm::vec4(-0.5, 0.5, -0.5, 1), //19
-                                //bottom face
-                                glm::vec4(-0.5, -0.5, 0.5, 1),
-                                glm::vec4(0.5, -0.5, 0.5, 1),
-                                glm::vec4(0.5, -0.5, -0.5, 1),
-                                glm::vec4(-0.5, -0.5, -0.5, 1)};
+        glm::vec4(-0.5, -0.5, 0.5, 1),
+                glm::vec4(0.5, -0.5, 0.5, 1),
+                glm::vec4(0.5, 0.5, 0.5, 1),
+                glm::vec4(-0.5, 0.5, 0.5, 1),
+                //back face
+                glm::vec4(-0.5, -0.5, -0.5, 1),
+                glm::vec4(0.5, -0.5, -0.5, 1),
+                glm::vec4(0.5, 0.5, -0.5, 1),
+                glm::vec4(-0.5, 0.5, -0.5, 1),
+                //right face
+                glm::vec4(0.5, -0.5, 0.5, 1),
+                glm::vec4(0.5, -0.5, -0.5, 1),
+                glm::vec4(0.5, 0.5, -0.5, 1),
+                glm::vec4(0.5, 0.5, 0.5, 1),
+                //left face
+                glm::vec4(-0.5, -0.5, 0.5, 1),
+                glm::vec4(-0.5, -0.5, -0.5, 1),
+                glm::vec4(-0.5, 0.5, -0.5, 1),
+                glm::vec4(-0.5, 0.5, 0.5, 1),
+                //top face
+                glm::vec4(-0.5, 0.5, 0.5, 1), //16
+                glm::vec4(0.5, 0.5, 0.5, 1),
+                glm::vec4(0.5, 0.5, -0.5, 1),
+                glm::vec4(-0.5, 0.5, -0.5, 1), //19
+                //bottom face
+                glm::vec4(-0.5, -0.5, 0.5, 1),
+                glm::vec4(0.5, -0.5, 0.5, 1),
+                glm::vec4(0.5, -0.5, -0.5, 1),
+                glm::vec4(-0.5, -0.5, -0.5, 1)};
 
     std::vector<glm::vec4> nor {//front
-                                glm::vec4(0, 0, 1, 0),
-                                glm::vec4(0, 0, 1, 0),
-                                glm::vec4(0, 0, 1, 0),
-                                glm::vec4(0, 0, 1, 0),
-                                //back
-                                glm::vec4(0, 0, -1, 0),
-                                glm::vec4(0, 0, -1, 0),
-                                glm::vec4(0, 0, -1, 0),
-                                glm::vec4(0, 0, -1, 0),
-                                //right
-                                glm::vec4(1, 0, 0, 0),
-                                glm::vec4(1, 0, 0, 0),
-                                glm::vec4(1, 0, 0, 0),
-                                glm::vec4(1, 0, 0, 0),
-                                //left
-                                glm::vec4(-1, 0, 0, 0),
-                                glm::vec4(-1, 0, 0, 0),
-                                glm::vec4(-1, 0, 0, 0),
-                                glm::vec4(-1, 0, 0, 0),
-                                //top
-                                glm::vec4(0, 1, 0, 0),
-                                glm::vec4(0, 1, 0, 0),
-                                glm::vec4(0, 1, 0, 0),
-                                glm::vec4(0, 1, 0, 0),
-                                //bottom
-                                glm::vec4(0, -1, 0, 0),
-                                glm::vec4(0, -1, 0, 0),
-                                glm::vec4(0, -1, 0, 0),
-                                glm::vec4(0, -1, 0, 0)};
+        glm::vec4(0, 0, 1, 0),
+                glm::vec4(0, 0, 1, 0),
+                glm::vec4(0, 0, 1, 0),
+                glm::vec4(0, 0, 1, 0),
+                //back
+                glm::vec4(0, 0, -1, 0),
+                glm::vec4(0, 0, -1, 0),
+                glm::vec4(0, 0, -1, 0),
+                glm::vec4(0, 0, -1, 0),
+                //right
+                glm::vec4(1, 0, 0, 0),
+                glm::vec4(1, 0, 0, 0),
+                glm::vec4(1, 0, 0, 0),
+                glm::vec4(1, 0, 0, 0),
+                //left
+                glm::vec4(-1, 0, 0, 0),
+                glm::vec4(-1, 0, 0, 0),
+                glm::vec4(-1, 0, 0, 0),
+                glm::vec4(-1, 0, 0, 0),
+                //top
+                glm::vec4(0, 1, 0, 0),
+                glm::vec4(0, 1, 0, 0),
+                glm::vec4(0, 1, 0, 0),
+                glm::vec4(0, 1, 0, 0),
+                //bottom
+                glm::vec4(0, -1, 0, 0),
+                glm::vec4(0, -1, 0, 0),
+                glm::vec4(0, -1, 0, 0),
+                glm::vec4(0, -1, 0, 0)};
 
     std::vector<GLuint> idx {0, 1, 2, 0, 2, 3,
                              4, 5, 6, 4, 6, 7,

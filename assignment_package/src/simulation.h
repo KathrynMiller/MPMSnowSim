@@ -55,7 +55,7 @@ public:
     // compute forces
     void computeForces();
     void updateGradient();
-    void handleParticleCollisions(Collider* collider);
+    void handleParticleCollisions();
     // G2P
     void G2P();
 

@@ -13,9 +13,8 @@
 Simulation::Simulation(int numSeconds, int frameRate): grid(nullptr)
 {
     stepsPerFrame = ceil(1.0 / (dt / (1.0 / frameRate)));
-    //numOutputFrames = numSeconds;
+    numOutputFrames = numSeconds;
     numOutputFrames = frameRate * numSeconds;
-    std::cout << "NUMBER OF FINAL FRAMES: " + numOutputFrames;
 }
 
 void Simulation::setParticles(Particles* p) {
@@ -74,16 +73,6 @@ static float funcN(float x) {
     else {
         return 0.f;
     }
-
-    //        if (absX < 1.0f) {
-    //            return 0.5f * pow(absX, 3.0f) - pow(x, 2.0f) + (2.0f / 3.0f);
-    //        }
-    //        else if (absX < 2.0f) {
-    //            return (-1.0f / 6.0f) * pow(absX, 3.0f) + pow(x, 2.0f) -2.0f * absX + (4.0f / 3.0f);
-    //        }
-    //        else {
-    //            return 0.f;
-    //        }
 }
 
 static float gradN(float x) {
@@ -92,20 +81,9 @@ static float gradN(float x) {
         return -2.0f * x;
     }
     else if (absX < 1.5f) {
-        //return x - 1.5f * (x < 0 ? -1 : 1);
-        return (-x * (1.5f - absX)) / absX;
+        return x - 1.5f * (x < 0 ? -1 : 1);
     }
     return 0.f;
-    //        if (absX < 1.0f) {
-    //            return 0.5f * x * ((3.0f * absX) - 4.0f);
-    //        }
-    //        else if (absX < 2.0f) {
-    //            return (-x * pow(absX - 2.0f, 2.0f)) / (2.0f * absX);
-    //        }
-    //        else {
-    //            return 0.f;
-    //        }
-
 }
 
 // returns the local base node of particle p in grid coordinates
@@ -156,22 +134,19 @@ void Simulation::fillKernelWeights() {
         glm::vec3 gridOffset = (particle - grid->origin) / grid->cellsize; // pos on grid in cellsize-units
         glm::vec3 baseNodeOffset = gridOffset - glm::vec3(floor(gridOffset[0] - 0.5), floor(gridOffset[1] - 0.5),
                 floor(gridOffset[2] - 0.5));
-        // kernel for particle p
-        KernelWeights* kernelWeight = particles->kernelWeights[p];
-        kernelWeight->N = Eigen::Matrix3d::Zero(3, 3);
-        kernelWeight->N_deriv = Eigen::Matrix3d::Zero(3, 3);
 
         for(int i = 0; i < 3; i++) { // rows of N and N'
             for(int j = 0; j < 3; j++) { // columns of N and N'
 
                 float x = baseNodeOffset[i] - j;
                 // assert(x <= 2);
-                kernelWeight->N(i, j) = funcN(x);
-                kernelWeight->N_deriv(i, j) = gradN(x);
+                particles->kernelWeights[p]->N(i, j) = funcN(x);
+                particles->kernelWeights[p]->N_deriv(i, j) = gradN(x);
             }
         }
 
         // sum to test for valid weights
+        /*
         double wSum = 0.0;
         Eigen::Vector3d gradWSum = Eigen::Vector3d::Zero();
         std::vector<glm::vec3> neighbors = getNeighbors(particle);
@@ -184,6 +159,7 @@ void Simulation::fillKernelWeights() {
         assert(abs(gradWSum(0, 0)) < 1e-4);
         assert(abs(gradWSum(1, 0)) < 1e-4);
         assert(abs(gradWSum(2, 0)) < 1e-4);
+        */
     }
 }
 
@@ -201,15 +177,11 @@ void Simulation::P2G() {
             glm::vec3 currNode = neighborNodes[i];
             float weight = getWeight(particles->kernelWeights[p], particle, currNode);
 
-            // extract particle mass and velocity from eigen matrix
-            float pMass = particles->masses(p);
-            glm::vec3 pVelocity = glm::vec3(particles->velocities(p, 0), particles->velocities(p, 1), particles->velocities(p, 2));
-
             // grid attributes += weight * particle attributes
-            float gridMass = grid->getMass(currNode) + (weight * pMass);
-            glm::vec3 gridMomentum = grid->getMomentum(currNode) + (weight * pMass * pVelocity);
-
-            glm::vec3 gridVelocity = glm::vec3(0.0, 0.0, 0.0);
+            glm::vec3 pVelocity = glm::vec3(particles->velocities(p, 0), particles->velocities(p, 1), particles->velocities(p, 2));
+            glm::vec3 gridMomentum = grid->getMomentum(currNode) + (weight * (float)particles->masses(p) * pVelocity);
+            float gridMass = grid->getMass(currNode) + (weight * particles->masses(p));
+            glm::vec3 gridVelocity = glm::vec3();
             if(gridMass > 0.0) {
                 gridVelocity = gridMomentum / gridMass;
             }
@@ -281,11 +253,7 @@ void Simulation::computeStress() {
             matSigma(1,1) = tempRecord;
         }
 
-        Eigen::Matrix3d R = U * V.transpose();
-        Eigen::Matrix3d FInvTranspose = ComputeJFInvTranspose(F);
-        // use it to calculate the stress and put this in the particle's stress matrix
-        // TODO incorporate plastic part
-        Eigen::Matrix3d newStress = (2.0 * mu * (F - R)) + (lambda * (J - 1) * J * FInvTranspose);
+        Eigen::Matrix3d newStress = (2.0 * mu * (F - (U * V.transpose()))) + (lambda * (J - 1) * J * ComputeJFInvTranspose(F));
         particles->deformations[i]->stress = newStress;
     }
 }
@@ -371,9 +339,7 @@ void Simulation::computeForces() {
             glm::vec3 gridForce =  grid->getForces(currNode);
 
             Eigen::Vector3d sumTerm = m * weightGrad;
-            gridForce[0] -= sumTerm(0);
-            gridForce[1] -= sumTerm(1);
-            gridForce[2] -= sumTerm(2);
+            gridForce -= glm::vec3(sumTerm(0), sumTerm(1), sumTerm(2));
             grid->setForces(currNode, gridForce);
 
         } // end for neighbor nodes
@@ -407,67 +373,45 @@ void Simulation::G2P() {
     }
 }
 
-void Simulation::handleParticleCollisions(Collider* collider) {
+void Simulation::handleParticleCollisions() {
     bool sticky = true;
     float friction = 0.0f; // mu
     // for all grid node positions
-    for(int i = 0; i < numParticles; i++) {
+    for(Collider* collider: colliders) {
+        for(int i = 0; i < numParticles; i++) {
 
-        glm::vec3 worldPos = toVec3(particles->positions, i);
-        glm::vec3 vel = toVec3(particles->velocities, i);
+            glm::vec3 worldPos = toVec3(particles->positions, i);
+            glm::vec3 vel = toVec3(particles->velocities, i);
 
-        if(collider->isInside(worldPos)) {
-            if(sticky) {
-                particles->velocities(i, 0) = 0.0;
-                particles->velocities(i, 1) = 0.0;
-                particles->velocities(i, 2) = 0.0;
-            } else {
-                glm::vec3 n = collider->getNormal(worldPos);
-                float dot = glm::dot(n, vel);
-                if (dot < 0) {
-                    particles->velocities(i, 0) = vel[0] - dot * n[0];
-                    particles->velocities(i, 1) = vel[1] - dot * n[1];
-                    particles->velocities(i, 2) = vel[2] - dot * n[2];
-                    if (friction != 0){
-                        // should this be length2?
-                        if (-dot * friction < vel.length()) {
-                            glm::vec3 newVel = vel + dot * friction * glm::normalize(vel);
-                            particles->velocities(i, 0) = newVel[0];
-                            particles->velocities(i, 1) = newVel[1];
-                            particles->velocities(i, 2) = newVel[2];
+            if(collider->isInside(worldPos)) {
+                if(sticky) {
+                    particles->velocities(i, 0) = 0.0;
+                    particles->velocities(i, 1) = 0.0;
+                    particles->velocities(i, 2) = 0.0;
+                } else {
+                    glm::vec3 n = collider->getNormal(worldPos);
+                    float dot = glm::dot(n, vel);
+                    if (dot < 0) {
+                        particles->velocities(i, 0) = vel[0] - dot * n[0];
+                        particles->velocities(i, 1) = vel[1] - dot * n[1];
+                        particles->velocities(i, 2) = vel[2] - dot * n[2];
+                        if (friction != 0){
+                            // should this be length2?
+                            if (-dot * friction < vel.length()) {
+                                glm::vec3 newVel = vel + dot * friction * glm::normalize(vel);
+                                particles->velocities(i, 0) = newVel[0];
+                                particles->velocities(i, 1) = newVel[1];
+                                particles->velocities(i, 2) = newVel[2];
+                            }
+                            else {
+                                particles->velocities(i, 0) = 0.0;
+                                particles->velocities(i, 1) = 0.0;
+                                particles->velocities(i, 2) = 0.0;
+                            }
+
                         }
-                        else {
-                            particles->velocities(i, 0) = 0.0;
-                            particles->velocities(i, 1) = 0.0;
-                            particles->velocities(i, 2) = 0.0;
-                        }
-
                     }
                 }
-                //                glm::vec3 n = collider->getNormal(worldPos);
-                //                glm::vec3 v = toVec3(particles->velocities, i);
-                //                glm::vec3 vCo = glm::vec3(); // velocity of collider, static for now
-                //                glm::vec3 vRel = v - vCo;
-
-                //                float vN = glm::dot(vRel, n);
-                //                if(vN >= 0) { // separating, no collision
-                //                    return;
-                //                }
-
-                //                glm::vec3 vRelPrime;
-                //                glm::vec3 vPrime;
-                //                glm::vec3 vT = vRel - (n * vN);
-                //                if(vT.length() <= (-friction * vN)) {
-                //                    vRelPrime = glm::vec3();
-                //                } else{
-                //                    vRelPrime = vT + (friction * (vN * (glm::normalize(vT)))); // friction 0 for now so doesn't matter
-                //                }
-
-                //                vPrime = vRelPrime + vCo;
-
-                //                particles->velocities(i, 0) = vPrime[0];
-                //                particles->velocities(i, 1) = vPrime[1];
-                //                particles->velocities(i, 2) = vPrime[2];
             }
         }
     }
@@ -486,7 +430,9 @@ void Simulation::updateParticlePositions() {
 }
 
 void Simulation::updateGradient() {
-
+    float thetaC = 2.5e-2;
+    float thetaS = 5.5e-3;
+    bool plastic = true;
     for(int p = 0; p < particles->numParticles; p++) {
 
         glm::vec3 particle = toVec3(particles->positions, p);
@@ -514,10 +460,7 @@ void Simulation::updateGradient() {
         }
         Eigen::Matrix3d newF = particles->deformations[p]->F + (dt * gradVp * particles->deformations[p]->F);
 
-        bool plastic = true;
         if(plastic) {
-            float thetaC = 2.5e-2;
-            float thetaS = 5.5e-3;
 
             Eigen::Matrix3d newFe, newFp;
             Eigen::Matrix3d Fe = particles->deformations[p]->Fe;
@@ -578,46 +521,61 @@ void Simulation::RunSimulation(QString output_filepath, GLWidget277* mygl) {
     int i = numOutputFrames;
 
     while(i > 0) {
+        std::clock_t start, p2gstart, g2pstart, updatestart, forcestart, updatefstart;
+        double duration, p2gduration, g2pduration, updateduration, forceduration, updatefduration;
         // iterate step steps per frame
         int step = stepsPerFrame;
+        step = 1;
         while(step > 0) {
             grid->clear();
 
             fillKernelWeights();
-            // transfer attributes to the grid
+            start = std::clock();
+            p2gstart = std::clock();
             P2G();
-            // compute Piola Kirchoff stress per particle
+            p2gduration = ( std::clock() - p2gstart ) / (double) CLOCKS_PER_SEC;
+
+            forcestart = std::clock();
             if(isSnow) {
                 computeSnowStress();
-            }else {
+            } else {
                 computeStress();
             }
 
-            // compute forces on grid using stress
             computeForces();
-            // apply forces to grid velocity
+            forceduration = ( std::clock() - forcestart ) / (double) CLOCKS_PER_SEC;
+
+            updatestart = std::clock();
             grid->applyForces(dt);
+            updateduration = ( std::clock() - updatestart ) / (double) CLOCKS_PER_SEC;
+
 
             // border collisions on grid
             grid->handleBorderCollisions();
-
             for(Collider* c: colliders) {
                 grid->handleGridCollisions(c);
             }
 
-            // transfer attributes back to particles
+            g2pstart = std::clock();
             G2P();
+            g2pduration = ( std::clock() - g2pstart ) / (double) CLOCKS_PER_SEC;
 
-            for(Collider* c: colliders) {
-                handleParticleCollisions(c);
-            }
+            handleParticleCollisions();
 
-            // update F
+            updatefstart = std::clock();
             updateGradient();
-            //update particle positions
+            updatefduration = ( std::clock() - updatefstart ) / (double) CLOCKS_PER_SEC;
+
             updateParticlePositions();
 
             step--;
+
+            std::cout << "      P2G time is: " << p2gduration << "\n";
+            std::cout << "      UPV time is: " << updateduration << "\n";
+            std::cout << "      FRC time is: " << forceduration << "\n";
+            std::cout << "      UPF time is: " << updatefduration << "\n";
+            std::cout << "      G2P time is: " << g2pduration << "\n";
+            std::cout << "      overall time is: " << duration << "\n\n";
         }
         saveToGeo(output_filepath);
         frameNumber++;

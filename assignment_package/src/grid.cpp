@@ -117,30 +117,6 @@ void Grid::handleGridCollisions(Collider* collider) {
 
                             }
                         }
-                        //                        glm::vec3 n = collider->getNormal(worldPos);
-                        //                        glm::vec3 v = toVec3(gridVelocities, index);
-                        //                        glm::vec3 vCo = glm::vec3(); // velocity of collider, static for now
-                        //                        glm::vec3 vRel = v - vCo;
-
-                        //                        float vN = glm::dot(vRel, n);
-                        //                        if(vN >= 0) { // separating, no collision
-                        //                            return;
-                        //                        }
-
-                        //                        glm::vec3 vRelPrime;
-                        //                        glm::vec3 vPrime;
-                        //                        glm::vec3 vT = vRel - (n * vN);
-                        //                        if(vT.length() <= (-friction * vN)) {
-                        //                            vRelPrime = glm::vec3();
-                        //                        } else{
-                        //                            vRelPrime = vT + (friction * (vN * (glm::normalize(vT)))); // friction 0 for now so doesn't matter
-                        //                        }
-
-                        //                        vPrime = vRelPrime + vCo;
-
-                        //                        gridVelocities(index, 0) = vPrime[0];
-                        //                        gridVelocities(index, 1) = vPrime[1];
-                        //                        gridVelocities(index, 2) = vPrime[2];
                     }
                 }
             }

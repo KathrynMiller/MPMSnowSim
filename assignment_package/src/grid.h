@@ -34,7 +34,7 @@ public:
 
     void applyForces(float dt);
     void handleBorderCollisions();
-    void handleGridCollisions(Collider* collider);
+    void handleGridCollisions(Collider *collider);
 
     void clear();
 
